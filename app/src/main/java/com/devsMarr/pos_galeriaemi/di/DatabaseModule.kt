@@ -1,0 +1,30 @@
+package com.devsMarr.pos_galeriaemi.di
+
+import android.content.Context
+import androidx.room.Room
+import com.devsMarr.pos_galeriaemi.data.local.PosDatabase
+import dagger.Module
+import dagger.Provides
+import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
+import dagger.hilt.components.SingletonComponent
+import javax.inject.Singleton
+
+@Module
+@InstallIn(SingletonComponent::class)
+object DatabaseModule {
+
+    @Provides
+    @Singleton
+    fun provideDatabase(
+        @ApplicationContext context: Context
+    ): PosDatabase {
+        return Room.databaseBuilder(
+            context,
+            PosDatabase::class.java,
+            "pos_database_local" // El nombre físico del archivo en la tablet
+        )
+            .fallbackToDestructiveMigration() // Si cambia una tabla, borra todo y empieza de cero para no crashear.
+            .build()
+    }
+}

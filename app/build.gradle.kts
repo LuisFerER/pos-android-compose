@@ -57,4 +57,8 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
+
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx) // Para usar corrutinas (suspend functions)
+    ksp(libs.androidx.room.compiler)       // El procesador de anotaciones (usando KSP)
 }
