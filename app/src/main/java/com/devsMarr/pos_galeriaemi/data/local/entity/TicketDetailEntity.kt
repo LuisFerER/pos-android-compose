@@ -26,7 +26,7 @@ import androidx.room.PrimaryKey
         Index(value = ["productId"])
     ]
 )
-class TicketDetailEntity (
+data class TicketDetailEntity (
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
 
