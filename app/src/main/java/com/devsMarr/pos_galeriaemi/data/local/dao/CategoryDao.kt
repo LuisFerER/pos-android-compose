@@ -20,6 +20,6 @@ interface CategoryDao {
     @Update
     suspend fun updateCategory(category: CategoryEntity)
 
-    @Delete
-    suspend fun deleteCategory(category: CategoryEntity)
+    @Query("DELETE FROM categories WHERE id = :categoryId")
+    suspend fun deleteCategoryById(categoryId: Long)
 }
