@@ -61,4 +61,6 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx) // Para usar corrutinas (suspend functions)
     ksp(libs.androidx.room.compiler)       // El procesador de anotaciones (usando KSP)
+
+    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
 }
