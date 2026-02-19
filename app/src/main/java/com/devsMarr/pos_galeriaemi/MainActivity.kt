@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import com.devsMarr.pos_galeriaemi.ui.presentation.inventory.ProductListScreen
 import com.devsMarr.pos_galeriaemi.ui.presentation.pos.PosScreen
 import com.devsMarr.pos_galeriaemi.ui.theme.PosGaleriaEmiTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -22,6 +23,15 @@ class MainActivity : ComponentActivity() {
         setContent {
             PosGaleriaEmiTheme {
                 PosScreen()
+
+//                ProductListScreen(
+//                    onNavigateToAddProduct = {
+//                        Toast.makeText(this, "Navegar a Agregar", Toast.LENGTH_SHORT).show()
+//                    },
+//                    onNavigateToEditProduct = { id ->
+//                        Toast.makeText(this, "Editar producto $id", Toast.LENGTH_SHORT).show()
+//                    }
+//                )
             }
         }
     }
