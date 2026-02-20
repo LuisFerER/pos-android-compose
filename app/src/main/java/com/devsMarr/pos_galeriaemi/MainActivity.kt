@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import com.devsMarr.pos_galeriaemi.ui.navigation.PosNavigation
 import com.devsMarr.pos_galeriaemi.ui.presentation.category_form.CategoryFormScreen
 import com.devsMarr.pos_galeriaemi.ui.presentation.inventory.ProductListScreen
 import com.devsMarr.pos_galeriaemi.ui.presentation.pos.PosScreen
@@ -44,12 +45,14 @@ class MainActivity : ComponentActivity() {
 //                )
 
                 // Cambiamos temporalmente para probar el formulario de Productos
-                ProductFormScreen(
-                    onNavigateBack = {
-                        // Cuando se guarde con éxito, se ejecutará esto
-                        Toast.makeText(this, "¡Producto guardado! (Regresando...)", Toast.LENGTH_SHORT).show()
-                    }
-                )
+//                ProductFormScreen(
+//                    onNavigateBack = {
+//                        // Cuando se guarde con éxito, se ejecutará esto
+//                        Toast.makeText(this, "¡Producto guardado! (Regresando...)", Toast.LENGTH_SHORT).show()
+//                    }
+//                )
+
+                PosNavigation()
             }
         }
     }
