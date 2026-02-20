@@ -20,6 +20,7 @@ data class PosUiState (
     val productsCatalog: List<Product> = emptyList(), // Lista limpia de dominio
     val categories: List<Category> = emptyList(),     // Lista limpia de dominio
     val selectedCategory: Category? = null,           // Filtro activo (null = Todos)
+    val searchQuery: String = "",
     val isLoadingCatalog: Boolean = false,
 
     // --- SECCIÓN CARRITO ---

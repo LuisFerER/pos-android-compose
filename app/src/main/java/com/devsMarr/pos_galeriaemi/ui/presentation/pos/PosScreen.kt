@@ -1,26 +1,24 @@
 package com.devsMarr.pos_galeriaemi.ui.presentation.pos
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.VerticalDivider
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
-fun PosScreen() {
+fun PosScreen(
+    viewModel: PosViewModel = hiltViewModel()
+) {
+    // Subscripción al ViewModel
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
     ) { innerPadding ->
@@ -35,19 +33,43 @@ fun PosScreen() {
             // ---------------------------------------------------------
             // SECCIÓN IZQUIERDA: PRODUCTOS
             // ---------------------------------------------------------
-            Box(
+            Column(
                 modifier = Modifier
                     .weight(0.7f) // El 70% del ancho
                     .fillMaxHeight()
                     .background(MaterialTheme.colorScheme.background),
-                contentAlignment = Alignment.Center
             ) {
-                // TODO: Aquí irá el Grid de Productos y Categorías
-                Text(
-                    text = "Área de Productos",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.onBackground
+                PosSearchBar(
+                    query = uiState.searchQuery,
+                    onQueryChange = { newText ->
+                        viewModel.searchProduct(newText)
+                    },
+                    modifier = Modifier.padding(16.dp)
                 )
+
+                CategoryCarousel(
+                    categories = uiState.categories,
+                    selectedCategory = uiState.selectedCategory,
+                    onCategorySelected = { category ->
+                        viewModel.filterByCategory(category)
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                if (uiState.isLoadingCatalog) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                } else {
+                    ProductGrid(
+                        products = uiState.productsCatalog,
+                        onProductClick = { product ->
+                            viewModel.addToCart(product)
+                        },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
             }
 
             // Separador

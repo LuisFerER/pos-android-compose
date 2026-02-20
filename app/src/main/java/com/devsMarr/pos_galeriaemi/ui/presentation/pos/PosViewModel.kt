@@ -33,6 +33,8 @@ class PosViewModel @Inject constructor(
         // Indicar al UI que se estan cargando datos
         _uiState.value = _uiState.value.copy(isLoadingCatalog = true)
 
+        //TODO: DESCOMENTAR PARA CUANDO SE USE LA BD REAL
+        /*
         viewModelScope.launch {
             launch {
                 categoryRepository.getAllCategories().collect { categoriesList ->
@@ -60,37 +62,47 @@ class PosViewModel @Inject constructor(
                 }
             }
         }
+        */
+        // ==========================================================
+        // CÓDIGO MOCK TEMPORAL PARA PRUEBAS UI
+        // ==========================================================
+        val mockCategories = getMockCategories()
+        val mockProducts = getMockProducts()
+
+        fullProductList = mockProducts // Guardamos en caché para las búsquedas
+
+        _uiState.value = _uiState.value.copy(
+            categories = mockCategories,
+            productsCatalog = mockProducts,
+            isLoadingCatalog = false
+        )
     }
 
     // --- ACCIONES DE CATÁLOGO ---
 
     fun filterByCategory(category: Category?) {
-        val filteredList = if (category == null) {
-            fullProductList
-        } else {
-            fullProductList.filter { it.categoryId == category.id }
-        }
-
-        _uiState.value = _uiState.value.copy(
-            productsCatalog = filteredList,
-            selectedCategory = category
-        )
+        _uiState.value = _uiState.value.copy(selectedCategory = category)
+        applyFilters()
     }
 
     fun searchProduct(query: String) {
-        val currentCategory = _uiState.value.selectedCategory
+        _uiState.value = _uiState.value.copy(searchQuery = query)
+        applyFilters()
+    }
 
-        if (query.isBlank()) {
-            filterByCategory(currentCategory)
-            return
+    private fun applyFilters() {
+        val currentState = _uiState.value
+        val categoryFilter = currentState.selectedCategory
+        val textFilter = currentState.searchQuery
+
+        val filteredList = fullProductList.filter { product ->
+            val matchesCategory = categoryFilter == null || product.categoryId == categoryFilter.id
+            val matchesText = textFilter.isBlank() || product.name.contains(textFilter, ignoreCase = true)
+            matchesCategory && matchesText
         }
 
-        val searchResult = fullProductList.filter { product ->
-            val matchesCategory = currentCategory == null || product.categoryId == currentCategory.id
-            val matchesName = product.name.contains(query, ignoreCase = true)
-            matchesCategory && matchesName
-        }
-
+        // Actualizar el catálogo visible en la UI
+        _uiState.value = currentState.copy(productsCatalog = filteredList)
     }
 
     // --- ACCIONES DE CARRITO ---
@@ -247,16 +259,45 @@ class PosViewModel @Inject constructor(
             // 3. Mapear los cartItems a TicketDetailEntity
             // 4. Llamar a ticketRepository.saveTicket(head, details)
 
-            // 2. Notificamos a la UI que la venta se registró correctamente
+            // Se notifica a la UI que la venta se registró correctamente
             _uiState.value = _uiState.value.copy(
                 isSaleCompleted = true
             )
         }
     }
 
-    // Llama a esta función desde la UI cuando cierres el diálogo de "Venta Exitosa"
     fun acknowledgeSaleCompleted() {
-        // Restablecemos el estado de la venta
+        // Reestablecemos el estado de la venta
         clearCart()
+    }
+
+    // ==========================================================
+    // TODO: ELIMINAR ESTAS FUNCIONES CUANDO SE USE LA BD REAL
+    // ==========================================================
+    private fun getMockCategories(): List<Category> {
+        return listOf(
+            Category(id = 1, name = "Bebidas", color = 0xFF2196F3.toInt(), sortOrder = 1),   // Azul
+            Category(id = 2, name = "Botanas", color = 0xFFFF9800.toInt(), sortOrder = 2),   // Naranja
+            Category(id = 3, name = "Limpieza", color = 0xFF4CAF50.toInt(), sortOrder = 3),  // Verde
+            Category(id = 4, name = "Dulces", color = 0xFFE91E63.toInt(), sortOrder = 4)     // Rosa
+        )
+    }
+
+    private fun getMockProducts(): List<Product> {
+        return listOf(
+            Product(id = 101, categoryId = 1, name = "Coca-Cola 600ml", price = 18.50, stock = 50.0, isVariablePrice = false, isActive = true),
+            Product(id = 102, categoryId = 1, name = "Agua Natural Ciel 1L", price = 15.00, stock = 30.0, isVariablePrice = false, isActive = true),
+            Product(id = 103, categoryId = 1, name = "Jugo del Valle Mango", price = 22.00, stock = 12.0, isVariablePrice = false, isActive = true),
+
+            Product(id = 104, categoryId = 2, name = "Sabritas Sal 40g", price = 20.00, stock = 15.0, isVariablePrice = false, isActive = true),
+            Product(id = 105, categoryId = 2, name = "Doritos Nacho 50g", price = 22.00, stock = 20.0, isVariablePrice = false, isActive = true),
+
+            Product(id = 106, categoryId = 3, name = "Fabuloso Lavanda 1L", price = 35.00, stock = 10.0, isVariablePrice = false, isActive = true),
+            Product(id = 107, categoryId = 3, name = "Jabón Zote Rosa", price = 24.00, stock = 45.0, isVariablePrice = false, isActive = true),
+
+            // Producto con precio variable (a granel)
+            Product(id = 108, categoryId = 4, name = "Gomitas a granel", price = 0.00, stock = 5.5, isVariablePrice = true, isActive = true),
+            Product(id = 109, categoryId = 4, name = "Mazapán de la Rosa Gigante", price = 10.00, stock = 100.0, isVariablePrice = false, isActive = true)
+        )
     }
 }

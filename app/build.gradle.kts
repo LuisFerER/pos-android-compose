@@ -63,4 +63,6 @@ dependencies {
     ksp(libs.androidx.room.compiler)       // El procesador de anotaciones (usando KSP)
 
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
+
+    implementation(libs.androidx.material.icons.extended)
 }
