@@ -10,8 +10,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import com.devsMarr.pos_galeriaemi.ui.navigation.PosNavigation
+import com.devsMarr.pos_galeriaemi.ui.presentation.category_form.CategoryFormScreen
 import com.devsMarr.pos_galeriaemi.ui.presentation.inventory.ProductListScreen
 import com.devsMarr.pos_galeriaemi.ui.presentation.pos.PosScreen
+import com.devsMarr.pos_galeriaemi.ui.presentation.product_form.ProductFormScreen
 import com.devsMarr.pos_galeriaemi.ui.theme.PosGaleriaEmiTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -22,7 +25,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             PosGaleriaEmiTheme {
-                PosScreen()
+                //PosScreen()
 
 //                ProductListScreen(
 //                    onNavigateToAddProduct = {
@@ -32,6 +35,24 @@ class MainActivity : ComponentActivity() {
 //                        Toast.makeText(this, "Editar producto $id", Toast.LENGTH_SHORT).show()
 //                    }
 //                )
+
+//                // Cambiamos temporalmente la pantalla principal para probar
+//                CategoryFormScreen(
+//                    onNavigateBack = {
+//                        // Cuando se guarde con éxito, se ejecutará esto
+//                        Toast.makeText(this, "¡Categoría guardada! (Navegando atrás...)", Toast.LENGTH_SHORT).show()
+//                    }
+//                )
+
+                // Cambiamos temporalmente para probar el formulario de Productos
+//                ProductFormScreen(
+//                    onNavigateBack = {
+//                        // Cuando se guarde con éxito, se ejecutará esto
+//                        Toast.makeText(this, "¡Producto guardado! (Regresando...)", Toast.LENGTH_SHORT).show()
+//                    }
+//                )
+
+                PosNavigation()
             }
         }
     }
