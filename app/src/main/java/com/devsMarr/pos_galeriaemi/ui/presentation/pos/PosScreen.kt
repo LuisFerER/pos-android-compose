@@ -3,11 +3,14 @@ package com.devsMarr.pos_galeriaemi.ui.presentation.pos
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -89,35 +92,105 @@ fun PosScreen(
                 verticalArrangement = Arrangement.SpaceBetween, // Para empujar el total abajo
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Header (WIP)
+                // Header del Ticket
                 Box(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    // TODO: Aquí irá la lista de items agregados
                     Text(
-                        text = "Ticket",
+                        text = "Orden Actual",
                         style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontWeight = FontWeight.Bold
                     )
                 }
 
-                // Botón de cobrar (WIP)
-                Box(
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+                // Lista de Productos en el Carrito
+                if (uiState.cartItems.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "El carrito está vacío",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                } else {
+                    androidx.compose.foundation.lazy.LazyColumn(
+                        modifier = Modifier.weight(1f),
+                        contentPadding = PaddingValues(vertical = 8.dp)
+                    ) {
+                        items(uiState.cartItems) { cartItem ->
+                            CartItemRow(
+                                item = cartItem,
+                                onIncreaseQuantity = {
+                                    viewModel.updateQuantity(cartItem.id, cartItem.quantity + 1.0)
+                                },
+                                onDecreaseQuantity = {
+                                    viewModel.updateQuantity(cartItem.id, cartItem.quantity - 1.0)
+                                },
+                                onManualQuantityChange = { newQuantity ->
+                                    viewModel.updateQuantity(cartItem.id, newQuantity)
+                                },
+                                onRemove = {
+                                    viewModel.removeFromCart(cartItem.id)
+                                }
+                            )
+                        }
+                    }
+                }
+
+                Column(
                     modifier = Modifier
-                        .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
-                        .fillMaxSize()
-                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
-                        .weight(0.15f)
-                        .background(MaterialTheme.colorScheme.primaryContainer),
-                    contentAlignment = Alignment.Center
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.surfaceContainerLowest)
+                        .padding(16.dp)
                 ) {
-                    Text(
-                        text = "COBRAR",
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
-                    )
+                    // Total Fila
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "TOTAL",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "$ ${String.format("%.2f", uiState.totalAmount)}",
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Black
+                        )
+                    }
+
+                    // Botón COBRAR
+                    Button(
+                        onClick = {
+                            // TODO: Mostrar diálogo de cobro
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(64.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        enabled = uiState.cartItems.isNotEmpty()
+                    ) {
+                        Text(
+                            text = "COBRAR",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
         }

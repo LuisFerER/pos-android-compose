@@ -25,7 +25,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             PosGaleriaEmiTheme {
-                //PosScreen()
+                PosScreen()
 
 //                ProductListScreen(
 //                    onNavigateToAddProduct = {
@@ -52,7 +52,7 @@ class MainActivity : ComponentActivity() {
 //                    }
 //                )
 
-                PosNavigation()
+                //PosNavigation()
             }
         }
     }
