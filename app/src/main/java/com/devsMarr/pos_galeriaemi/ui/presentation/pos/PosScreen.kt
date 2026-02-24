@@ -22,6 +22,18 @@ fun PosScreen(
     // Subscripción al ViewModel
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+    // Estado para mostrar/ocultar el diálogo de cobro
+    var showCheckoutDialog by remember { mutableStateOf(false) }
+
+    // Observador reactivo: Cuando el ViewModel diga que la venta se completó,
+    // cerramos el diálogo y reseteamos el POS para el siguiente cliente.
+    LaunchedEffect(uiState.isSaleCompleted) {
+        if (uiState.isSaleCompleted) {
+            showCheckoutDialog = false
+            viewModel.acknowledgeSaleCompleted()
+        }
+    }
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
     ) { innerPadding ->
@@ -177,7 +189,7 @@ fun PosScreen(
                     // Botón COBRAR
                     Button(
                         onClick = {
-                            // TODO: Mostrar diálogo de cobro
+                            showCheckoutDialog = true
                         },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -193,6 +205,21 @@ fun PosScreen(
                     }
                 }
             }
+        }
+
+        if (showCheckoutDialog) {
+            CheckoutDialog(
+                totalAmount = uiState.totalAmount,
+                amountReceived = uiState.amountReceivedInput,
+                changeDue = uiState.changeDue,
+                isPaymentSufficient = uiState.isPaymentSufficient,
+                onAmountReceivedChange = { viewModel.onAmountReceivedChange(it) },
+                onConfirmSale = { viewModel.finalizeSale() },
+                onDismiss = {
+                    showCheckoutDialog = false
+                    viewModel.onAmountReceivedChange("") // Limpiamos el input si cancela
+                }
+            )
         }
     }
 }

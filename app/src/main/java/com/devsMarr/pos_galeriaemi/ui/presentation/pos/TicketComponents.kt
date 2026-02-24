@@ -3,8 +3,10 @@ package com.devsMarr.pos_galeriaemi.ui.presentation.pos
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
@@ -22,6 +24,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
+import kotlin.text.format
 
 
 @Composable
@@ -186,6 +189,112 @@ fun EditQuantityDialog(
                 }
             ) {
                 Text("Aceptar")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar")
+            }
+        }
+    )
+}
+
+@Composable
+fun CheckoutDialog(
+    totalAmount: Double,
+    amountReceived: String,
+    changeDue: Double,
+    isPaymentSufficient: Boolean,
+    onAmountReceivedChange: (String) -> Unit,
+    onConfirmSale: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    val focusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(Unit) {
+        delay(100)
+        focusRequester.requestFocus()
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "Cobrar Ticket",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()), // <-- ESTA ES LA MAGIA PARA QUE NO SE CORTE
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Total a pagar
+                Text(
+                    text = "Total a Pagar",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = "$ ${String.format("%.2f", totalAmount)}",
+                    style = MaterialTheme.typography.displaySmall,
+                    fontWeight = FontWeight.Black,
+                    color = MaterialTheme.colorScheme.primary
+                )
+
+                // Reducimos este Spacer de 24.dp a 12.dp para ahorrar espacio
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Input del Efectivo Recibido
+                OutlinedTextField(
+                    value = amountReceived,
+                    onValueChange = onAmountReceivedChange,
+                    label = { Text("Efectivo Recibido") },
+                    prefix = { Text("$ ") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    singleLine = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .focusRequester(focusRequester),
+                    textStyle = MaterialTheme.typography.headlineSmall
+                )
+
+                // Reducimos este Spacer de 24.dp a 12.dp
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Cálculo del Cambio (Dinámico)
+                val changeColor = if (isPaymentSufficient) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                val changeText = if (isPaymentSufficient) {
+                    "Cambio: $ ${String.format("%.2f", changeDue)}"
+                } else {
+                    val received = amountReceived.toDoubleOrNull() ?: 0.0
+                    val missing = totalAmount - received
+
+                    if (amountReceived.isEmpty()) {
+                        "Ingrese el pago"
+                    } else {
+                        "Falta: $ ${String.format("%.2f", missing)}"
+                    }
+                }
+
+                Text(
+                    text = changeText,
+                    style = MaterialTheme.typography.titleLarge, // Lo bajé un poquito de headlineSmall a titleLarge para que quepa mejor
+                    fontWeight = FontWeight.Bold,
+                    color = changeColor
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirmSale,
+                enabled = isPaymentSufficient, // Se desactiva si no ha pagado lo suficiente
+                modifier = Modifier.height(48.dp)
+            ) {
+                Text("Completar Venta", fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
