@@ -1,5 +1,6 @@
 package com.devsMarr.pos_galeriaemi.ui.presentation.pos
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.padding
@@ -10,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -177,7 +179,7 @@ fun PosScreen(
                     // Botón COBRAR
                     Button(
                         onClick = {
-                            // TODO: Mostrar diálogo de cobro
+                            // TO DO
                         },
                         modifier = Modifier
                             .fillMaxWidth()
