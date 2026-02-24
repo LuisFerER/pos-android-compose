@@ -222,7 +222,8 @@ class PosViewModel @Inject constructor(
             totalAmount = 0.0,
             amountReceivedInput = "",
             changeDue = 0.0,
-            isPaymentSufficient = false
+            isPaymentSufficient = false,
+            isSaleCompleted = false
         )
     }
 
