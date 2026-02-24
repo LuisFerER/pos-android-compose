@@ -6,6 +6,7 @@ import com.devsMarr.pos_galeriaemi.data.repository.CategoryRepository
 import com.devsMarr.pos_galeriaemi.domain.model.Category
 import com.devsMarr.pos_galeriaemi.domain.model.Product
 import com.devsMarr.pos_galeriaemi.data.repository.ProductRepository
+import com.devsMarr.pos_galeriaemi.data.repository.TicketRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,7 +17,8 @@ import javax.inject.Inject
 @HiltViewModel
 class PosViewModel @Inject constructor(
     private val productRepository: ProductRepository,
-    private val categoryRepository: CategoryRepository
+    private val categoryRepository: CategoryRepository,
+    private val ticketRepository: TicketRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PosUiState())
@@ -34,7 +36,7 @@ class PosViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(isLoadingCatalog = true)
 
         //TODO: DESCOMENTAR PARA CUANDO SE USE LA BD REAL
-        /*
+
         viewModelScope.launch {
             launch {
                 categoryRepository.getAllCategories().collect { categoriesList ->
@@ -62,20 +64,20 @@ class PosViewModel @Inject constructor(
                 }
             }
         }
-        */
-        // ==========================================================
-        // CÓDIGO MOCK TEMPORAL PARA PRUEBAS UI
-        // ==========================================================
-        val mockCategories = getMockCategories()
-        val mockProducts = getMockProducts()
 
-        fullProductList = mockProducts // Guardamos en caché para las búsquedas
-
-        _uiState.value = _uiState.value.copy(
-            categories = mockCategories,
-            productsCatalog = mockProducts,
-            isLoadingCatalog = false
-        )
+//        // ==========================================================
+//        // CÓDIGO MOCK TEMPORAL PARA PRUEBAS UI
+//        // ==========================================================
+//        val mockCategories = getMockCategories()
+//        val mockProducts = getMockProducts()
+//
+//        fullProductList = mockProducts // Guardamos en caché para las búsquedas
+//
+//        _uiState.value = _uiState.value.copy(
+//            categories = mockCategories,
+//            productsCatalog = mockProducts,
+//            isLoadingCatalog = false
+//        )
     }
 
     // --- ACCIONES DE CATÁLOGO ---
@@ -253,16 +255,44 @@ class PosViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            // TODO:
-            // 1. Generar un ID o Número de Ticket
-            // 2. Crear TicketHeadEntity con el Total y la Fecha
-            // 3. Mapear los cartItems a TicketDetailEntity
-            // 4. Llamar a ticketRepository.saveTicket(head, details)
+            try {
+                // Convertimos los CartItems del carrito a TicketDetails (Dominio)
+                val domainDetails = currentState.cartItems.map { cartItem ->
+                    com.devsMarr.pos_galeriaemi.domain.model.TicketDetail(
+                        // Como tienes productos manuales (sin ID), si es null le ponemos 0L
+                        productId = cartItem.product?.id ?: 0L,
+                        productNameSnapshot = cartItem.name,
+                        unitPriceSnapshot = cartItem.price,
+                        quantity = cartItem.quantity,
+                        subtotal = cartItem.quantity * cartItem.price
+                    )
+                }
 
-            // Se notifica a la UI que la venta se registró correctamente
-            _uiState.value = _uiState.value.copy(
-                isSaleCompleted = true
-            )
+                // Armamos el Ticket completo (Dominio)
+                val ticket = com.devsMarr.pos_galeriaemi.domain.model.Ticket(
+                    shiftId = 1L, // TODO: Cambiar por el ID del turno activo cuando tengas ese módulo
+                    totalAmount = currentState.totalAmount,
+                    receivedAmount = currentState.amountReceivedInput.toDoubleOrNull() ?: currentState.totalAmount,
+                    changeAmount = currentState.changeDue,
+                    paymentMethod = "CASH",
+                    status = "COMPLETED",
+                    details = domainDetails
+                )
+
+                // Mandamos a guardar a la Base de Datos
+                val generatedTicketId = ticketRepository.saveSale(ticket)
+
+                // Se notifica a la UI que la venta se registró correctamente
+                _uiState.value = _uiState.value.copy(
+                    isSaleCompleted = true
+                    // Podrías guardar el generatedTicketId aquí en el estado si lo necesitas para imprimir
+                )
+
+            } catch (e: Exception) {
+                // Opcional: Manejar el error si falla la base de datos
+                e.printStackTrace()
+                println("❌ ERROR AL GUARDAR VENTA: ${e.message}")
+            }
         }
     }
 
