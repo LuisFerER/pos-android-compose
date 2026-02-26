@@ -3,6 +3,8 @@ package com.devsMarr.pos_galeriaemi.ui.presentation.pos
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -229,7 +231,7 @@ fun CheckoutDialog(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .verticalScroll(rememberScrollState()), // <-- ESTA ES LA MAGIA PARA QUE NO SE CORTE
+                    .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // Total a pagar
@@ -245,7 +247,6 @@ fun CheckoutDialog(
                     color = MaterialTheme.colorScheme.primary
                 )
 
-                // Reducimos este Spacer de 24.dp a 12.dp para ahorrar espacio
                 Spacer(modifier = Modifier.height(12.dp))
 
                 // Input del Efectivo Recibido
@@ -262,10 +263,27 @@ fun CheckoutDialog(
                     textStyle = MaterialTheme.typography.headlineSmall
                 )
 
-                // Reducimos este Spacer de 24.dp a 12.dp
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Fila de billetes rápidos
+                LazyRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    val fastBills = listOf(500, 200, 100, 50, 20)
+                    items(fastBills) { bill ->
+                        OutlinedButton(
+                            onClick = { onAmountReceivedChange(bill.toString()) },
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text(text = "$$bill", fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Cálculo del Cambio (Dinámico)
+                // Cálculo del Cambio
                 val changeColor = if (isPaymentSufficient) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
                 val changeText = if (isPaymentSufficient) {
                     "Cambio: $ ${String.format("%.2f", changeDue)}"
@@ -282,7 +300,7 @@ fun CheckoutDialog(
 
                 Text(
                     text = changeText,
-                    style = MaterialTheme.typography.titleLarge, // Lo bajé un poquito de headlineSmall a titleLarge para que quepa mejor
+                    style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = changeColor
                 )
