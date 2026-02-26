@@ -5,9 +5,12 @@ import com.devsMarr.pos_galeriaemi.data.local.PosDatabase
 import com.devsMarr.pos_galeriaemi.data.local.dao.ProductDao
 import com.devsMarr.pos_galeriaemi.data.local.dao.TicketDetailDao
 import com.devsMarr.pos_galeriaemi.data.local.dao.TicketHeadDao
+import com.devsMarr.pos_galeriaemi.data.mapper.toDomain
 import com.devsMarr.pos_galeriaemi.data.mapper.toEntity
 import com.devsMarr.pos_galeriaemi.data.mapper.toHeadEntity
 import com.devsMarr.pos_galeriaemi.domain.model.Ticket
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -48,6 +51,18 @@ class TicketRepository @Inject constructor(
 
             // Retornamos el ID por si la UI lo necesita para imprimir el recibo
             generatedTicketId
+        }
+    }
+
+    /**
+     * Obtiene el historial completo de ventas de un turno.
+     * Devuelve un Flow para que la pantalla se actualice sola si ocurre una nueva venta.
+     */
+    fun getTicketsHistory(shiftId: Long): Flow<List<Ticket>> {
+        return ticketHeadDao.getFullTicketsByShift(shiftId).map { entitiesList ->
+            entitiesList.map { ticketWithDetails ->
+                ticketWithDetails.toDomain()
+            }
         }
     }
 }

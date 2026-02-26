@@ -3,8 +3,10 @@ package com.devsMarr.pos_galeriaemi.data.local.dao
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Update
 import com.devsMarr.pos_galeriaemi.data.local.entity.TicketHeadEntity
+import com.devsMarr.pos_galeriaemi.data.local.entity.TicketWithDetails
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -32,4 +34,9 @@ interface TicketHeadDao {
     // Devuelve Flow para que si haces una venta nueva, el numerito del total se actualice solo en pantalla.
     @Query("SELECT SUM(totalAmount) FROM ticket_heads WHERE shiftId = :shiftId AND status = 'COMPLETED'")
     fun getTotalSalesByShift(shiftId: Long): Flow<Double?>
+
+    // NUEVO: Obtener los tickets completos (Cabecera + Detalles) de un turno
+    @Transaction
+    @Query("SELECT * FROM ticket_heads WHERE shiftId = :shiftId ORDER BY timestamp DESC")
+    fun getFullTicketsByShift(shiftId: Long): Flow<List<TicketWithDetails>>
 }

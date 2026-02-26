@@ -32,5 +32,31 @@ fun TicketDetail.toEntity(newTicketId: Long): TicketDetailEntity {
     )
 }
 
-// (Opcional por ahora) Entity -> Domain: Útil para cuando hagas la pantalla de "Historial de Ventas"
-// fun TicketHeadEntity.toDomain(details: List<TicketDetailEntity>): Ticket { ... }
+// Convierte un Entity de Detalle al de Dominio
+fun TicketDetailEntity.toDomain(): TicketDetail {
+    return TicketDetail(
+        id = this.id,
+        ticketId = this.ticketId,
+        productId = this.productId,
+        productNameSnapshot = this.productNameSnapshot,
+        unitPriceSnapshot = this.unitPriceSnapshot,
+        quantity = this.quantity,
+        subtotal = this.subtotal
+    )
+}
+
+// Convierte la Relación completa de Room a tu Ticket de Dominio
+fun com.devsMarr.pos_galeriaemi.data.local.entity.TicketWithDetails.toDomain(): Ticket {
+    return Ticket(
+        id = this.ticketHead.id,
+        shiftId = this.ticketHead.shiftId,
+        timestamp = this.ticketHead.timestamp,
+        totalAmount = this.ticketHead.totalAmount,
+        receivedAmount = this.ticketHead.receivedAmount,
+        changeAmount = this.ticketHead.changeAmount,
+        paymentMethod = this.ticketHead.paymentMethod,
+        status = this.ticketHead.status,
+        // Mapeamos la lista de detalles
+        details = this.details.map { it.toDomain() }
+    )
+}
