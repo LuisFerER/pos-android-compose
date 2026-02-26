@@ -21,5 +21,5 @@ data class Ticket(
     val changeAmount: Double,
     val paymentMethod: String = "CASH",
     val status: String = "COMPLETED",
-    val details: List<TicketDetail> // <-- Aquí está la magia del dominio, todo agrupado
+    val details: List<TicketDetail>
 )

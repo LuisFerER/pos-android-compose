@@ -64,20 +64,6 @@ class PosViewModel @Inject constructor(
                 }
             }
         }
-
-//        // ==========================================================
-//        // CÓDIGO MOCK TEMPORAL PARA PRUEBAS UI
-//        // ==========================================================
-//        val mockCategories = getMockCategories()
-//        val mockProducts = getMockProducts()
-//
-//        fullProductList = mockProducts // Guardamos en caché para las búsquedas
-//
-//        _uiState.value = _uiState.value.copy(
-//            categories = mockCategories,
-//            productsCatalog = mockProducts,
-//            isLoadingCatalog = false
-//        )
     }
 
     // --- ACCIONES DE CATÁLOGO ---
@@ -238,7 +224,7 @@ class PosViewModel @Inject constructor(
         val difference = amount - total
         val change = if (difference > 0) difference else 0.0
 
-        val isSufficient = amount >= total && total > 0 // También evitamos cobrar $0.0
+        val isSufficient = amount >= total && total > 0
 
         _uiState.value = _uiState.value.copy(
             amountReceivedInput = cleanInput,
@@ -257,11 +243,9 @@ class PosViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                // Convertimos los CartItems del carrito a TicketDetails (Dominio)
                 val domainDetails = currentState.cartItems.map { cartItem ->
                     com.devsMarr.pos_galeriaemi.domain.model.TicketDetail(
-                        // Como tienes productos manuales (sin ID), si es null le ponemos 0L
-                        productId = cartItem.product?.id ?: 0L,
+                        productId = cartItem.product?.id ?: -1L,
                         productNameSnapshot = cartItem.name,
                         unitPriceSnapshot = cartItem.price,
                         quantity = cartItem.quantity,
@@ -269,9 +253,9 @@ class PosViewModel @Inject constructor(
                     )
                 }
 
-                // Armamos el Ticket completo (Dominio)
+                // Armamos el Ticket completo
                 val ticket = com.devsMarr.pos_galeriaemi.domain.model.Ticket(
-                    shiftId = 1L, // TODO: Cambiar por el ID del turno activo cuando tengas ese módulo
+                    shiftId = 1L, // TODO: Cambiar por el ID del turno activo
                     totalAmount = currentState.totalAmount,
                     receivedAmount = currentState.amountReceivedInput.toDoubleOrNull() ?: currentState.totalAmount,
                     changeAmount = currentState.changeDue,
@@ -286,13 +270,11 @@ class PosViewModel @Inject constructor(
                 // Se notifica a la UI que la venta se registró correctamente
                 _uiState.value = _uiState.value.copy(
                     isSaleCompleted = true
-                    // Podrías guardar el generatedTicketId aquí en el estado si lo necesitas para imprimir
                 )
 
             } catch (e: Exception) {
-                // Opcional: Manejar el error si falla la base de datos
                 e.printStackTrace()
-                println("❌ ERROR AL GUARDAR VENTA: ${e.message}")
+                android.util.Log.e("POS_DEBUG", "ERROR AL GUARDAR VENTA: ${e.message}")
             }
         }
     }
@@ -300,35 +282,5 @@ class PosViewModel @Inject constructor(
     fun acknowledgeSaleCompleted() {
         // Reestablecemos el estado de la venta
         clearCart()
-    }
-
-    // ==========================================================
-    // TODO: ELIMINAR ESTAS FUNCIONES CUANDO SE USE LA BD REAL
-    // ==========================================================
-    private fun getMockCategories(): List<Category> {
-        return listOf(
-            Category(id = 1, name = "Bebidas", color = 0xFF2196F3.toInt(), sortOrder = 1),   // Azul
-            Category(id = 2, name = "Botanas", color = 0xFFFF9800.toInt(), sortOrder = 2),   // Naranja
-            Category(id = 3, name = "Limpieza", color = 0xFF4CAF50.toInt(), sortOrder = 3),  // Verde
-            Category(id = 4, name = "Dulces", color = 0xFFE91E63.toInt(), sortOrder = 4)     // Rosa
-        )
-    }
-
-    private fun getMockProducts(): List<Product> {
-        return listOf(
-            Product(id = 101, categoryId = 1, name = "Coca-Cola 600ml", price = 18.50, stock = 50.0, isVariablePrice = false, isActive = true),
-            Product(id = 102, categoryId = 1, name = "Agua Natural Ciel 1L", price = 15.00, stock = 30.0, isVariablePrice = false, isActive = true),
-            Product(id = 103, categoryId = 1, name = "Jugo del Valle Mango", price = 22.00, stock = 12.0, isVariablePrice = false, isActive = true),
-
-            Product(id = 104, categoryId = 2, name = "Sabritas Sal 40g", price = 20.00, stock = 15.0, isVariablePrice = false, isActive = true),
-            Product(id = 105, categoryId = 2, name = "Doritos Nacho 50g", price = 22.00, stock = 20.0, isVariablePrice = false, isActive = true),
-
-            Product(id = 106, categoryId = 3, name = "Fabuloso Lavanda 1L", price = 35.00, stock = 10.0, isVariablePrice = false, isActive = true),
-            Product(id = 107, categoryId = 3, name = "Jabón Zote Rosa", price = 24.00, stock = 45.0, isVariablePrice = false, isActive = true),
-
-            // Producto con precio variable (a granel)
-            Product(id = 108, categoryId = 4, name = "Gomitas a granel", price = 0.00, stock = 5.5, isVariablePrice = true, isActive = true),
-            Product(id = 109, categoryId = 4, name = "Mazapán de la Rosa Gigante", price = 10.00, stock = 100.0, isVariablePrice = false, isActive = true)
-        )
     }
 }

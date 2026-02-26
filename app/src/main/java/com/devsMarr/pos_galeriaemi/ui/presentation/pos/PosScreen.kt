@@ -13,6 +13,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.devsMarr.pos_galeriaemi.domain.model.Product
 
 @Composable
 fun PosScreen(
@@ -23,6 +24,7 @@ fun PosScreen(
 
     // Estado para mostrar/ocultar el diálogo de cobro
     var showCheckoutDialog by remember { mutableStateOf(false) }
+    var showVariosDialog by remember { mutableStateOf(false) }
 
     // Observador reactivo: Cuando el ViewModel diga que la venta se completó,
     // cerramos el diálogo y reseteamos el POS para el siguiente cliente.
@@ -80,6 +82,9 @@ fun PosScreen(
                         products = uiState.productsCatalog,
                         onProductClick = { product ->
                             viewModel.addToCart(product)
+                        },
+                        onVariosClick = {
+                            showVariosDialog = true
                         },
                         modifier = Modifier.weight(1f)
                     )
@@ -217,6 +222,27 @@ fun PosScreen(
                 onDismiss = {
                     showCheckoutDialog = false
                     viewModel.onAmountReceivedChange("") // Limpiamos el input si cancela
+                }
+            )
+        }
+
+        if (showVariosDialog) {
+            VariosPriceDialog(
+                onDismiss = { showVariosDialog = false },
+                onConfirm = { enteredName, enteredPrice ->
+
+                    val variosProduct = Product(
+                        id = -(System.currentTimeMillis() % 10000),
+                        categoryId = 0,
+                        name = enteredName,
+                        price = enteredPrice,
+                        stock = 999.0,
+                        isVariablePrice = true,
+                        isActive = true
+                    )
+
+                    viewModel.addToCart(variosProduct)
+                    showVariosDialog = false
                 }
             )
         }
