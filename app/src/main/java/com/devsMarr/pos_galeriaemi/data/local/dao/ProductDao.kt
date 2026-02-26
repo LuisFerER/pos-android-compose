@@ -36,4 +36,9 @@ interface ProductDao {
     // SOFT DELETE: No borra el registro, solo se marca como inactivo.
     @Query("UPDATE products SET isActive = 0 WHERE id = :productId")
     suspend fun deleteProduct(productId: Long)
+
+    // RESTAR STOCK: Resta la cantidad indicada al inventario actual.
+    // Al usar "stock = stock - :quantity", SQLite permite que el resultado sea negativo si es necesario.
+    @Query("UPDATE products SET stock = stock - :quantity WHERE id = :productId")
+    suspend fun decreaseStock(productId: Long, quantity: Double)
 }
