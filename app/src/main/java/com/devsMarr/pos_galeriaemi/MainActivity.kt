@@ -5,6 +5,9 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -13,6 +16,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.devsMarr.pos_galeriaemi.ui.navigation.PosNavigation
 import com.devsMarr.pos_galeriaemi.ui.presentation.category_form.CategoryFormScreen
 import com.devsMarr.pos_galeriaemi.ui.presentation.inventory.ProductListScreen
+import com.devsMarr.pos_galeriaemi.ui.presentation.login.LoginScreen
 import com.devsMarr.pos_galeriaemi.ui.presentation.pos.PosScreen
 import com.devsMarr.pos_galeriaemi.ui.presentation.product_form.ProductFormScreen
 import com.devsMarr.pos_galeriaemi.ui.theme.PosGaleriaEmiTheme
@@ -25,7 +29,21 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             PosGaleriaEmiTheme {
-                PosScreen()
+                //PosScreen()
+
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    // LLAMAMOS A LA NUEVA PANTALLA
+                    LoginScreen(
+                        onLoginSuccess = {
+                            // Aquí más adelante llamaremos al navController para ir a PosScreen.
+                            // Por ahora puedes dejarlo vacío para solo ver que pase la validación.
+                            println("¡LOGIN EXITOSO!")
+                        }
+                    )
+                }
 
 //                ProductListScreen(
 //                    onNavigateToAddProduct = {
