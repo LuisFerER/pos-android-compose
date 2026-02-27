@@ -7,6 +7,7 @@ import com.devsMarr.pos_galeriaemi.data.local.dao.CategoryDao
 import com.devsMarr.pos_galeriaemi.data.local.dao.ProductDao
 import com.devsMarr.pos_galeriaemi.data.local.dao.TicketDetailDao
 import com.devsMarr.pos_galeriaemi.data.local.dao.TicketHeadDao
+import com.devsMarr.pos_galeriaemi.data.local.dao.UserDao
 
 
 import com.devsMarr.pos_galeriaemi.data.local.entity.CategoryEntity
@@ -14,6 +15,7 @@ import com.devsMarr.pos_galeriaemi.data.local.entity.ProductEntity
 import com.devsMarr.pos_galeriaemi.data.local.entity.CashShiftEntity
 import com.devsMarr.pos_galeriaemi.data.local.entity.TicketDetailEntity
 import com.devsMarr.pos_galeriaemi.data.local.entity.TicketHeadEntity
+import com.devsMarr.pos_galeriaemi.data.local.entity.UserEntity
 
 
 @Database(
@@ -22,7 +24,8 @@ import com.devsMarr.pos_galeriaemi.data.local.entity.TicketHeadEntity
         ProductEntity::class,
         CashShiftEntity::class,
         TicketHeadEntity::class,
-        TicketDetailEntity::class
+        TicketDetailEntity::class,
+        UserEntity::class
                ],
     version = 1,
     exportSchema = false,
@@ -38,5 +41,8 @@ abstract class PosDatabase : RoomDatabase() {
     abstract fun ticketHeadDao(): TicketHeadDao
 
     abstract fun ticketDetailDao(): TicketDetailDao
+
+    abstract fun userDao(): UserDao
+
 
 }

@@ -8,6 +8,7 @@ import com.devsMarr.pos_galeriaemi.data.local.dao.CategoryDao
 import com.devsMarr.pos_galeriaemi.data.local.dao.ProductDao
 import com.devsMarr.pos_galeriaemi.data.local.dao.TicketDetailDao
 import com.devsMarr.pos_galeriaemi.data.local.dao.TicketHeadDao
+import com.devsMarr.pos_galeriaemi.data.local.dao.UserDao
 
 import dagger.Module
 import dagger.Provides
@@ -48,4 +49,9 @@ object DatabaseModule {
 
     @Provides
     fun provideTicketDetailDao(db: PosDatabase): TicketDetailDao = db.ticketDetailDao()
+
+    @Provides
+    fun provideUserDao(database: PosDatabase): UserDao {
+        return database.userDao()
+    }
 }
