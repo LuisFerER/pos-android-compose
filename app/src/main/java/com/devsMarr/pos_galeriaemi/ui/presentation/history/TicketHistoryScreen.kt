@@ -29,7 +29,7 @@ import java.util.Locale
 @Composable
 fun TicketHistoryScreen(
     viewModel: TicketHistoryViewModel = hiltViewModel(),
-    onNavigateBack: () -> Unit
+    onBackClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showDatePicker by remember { mutableStateOf(false) }
@@ -69,7 +69,7 @@ fun TicketHistoryScreen(
                     }
                 },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = onBackClick) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Regresar")
                     }
                 },
