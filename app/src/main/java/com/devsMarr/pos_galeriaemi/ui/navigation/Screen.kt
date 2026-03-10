@@ -2,6 +2,7 @@ package com.devsMarr.pos_galeriaemi.ui.navigation
 
 sealed class Screen(val route: String) {
     // --- Rutas Principales ---
+    object Login : Screen("login_screen")
     object Pos : Screen("pos_screen")
     object AdminDashboard : Screen("admin_dashboard_screen")
     object TicketHistory : Screen("ticket_history_screen")
