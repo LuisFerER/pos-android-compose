@@ -27,7 +27,7 @@ import com.devsMarr.pos_galeriaemi.data.local.entity.UserEntity
         TicketDetailEntity::class,
         UserEntity::class
                ],
-    version = 1,
+    version = 2,
     exportSchema = false,
 
 )

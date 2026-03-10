@@ -32,4 +32,7 @@ interface UserDao {
     // Útil para saber si la base de datos está completamente vacía (para crear el primer Admin)
     @Query("SELECT COUNT(*) FROM users")
     suspend fun getUsersCount(): Int
+
+    @Query("SELECT * FROM users WHERE id = :userId LIMIT 1")
+    suspend fun getUserById(userId: Long): UserEntity?
 }
