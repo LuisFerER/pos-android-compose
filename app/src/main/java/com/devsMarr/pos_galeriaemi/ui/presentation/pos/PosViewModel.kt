@@ -7,10 +7,13 @@ import com.devsMarr.pos_galeriaemi.domain.model.Category
 import com.devsMarr.pos_galeriaemi.domain.model.Product
 import com.devsMarr.pos_galeriaemi.data.repository.ProductRepository
 import com.devsMarr.pos_galeriaemi.data.repository.TicketRepository
+import com.devsMarr.pos_galeriaemi.data.repository.CashShiftRepository
+import com.devsMarr.pos_galeriaemi.domain.manager.SessionManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -18,7 +21,9 @@ import javax.inject.Inject
 class PosViewModel @Inject constructor(
     private val productRepository: ProductRepository,
     private val categoryRepository: CategoryRepository,
-    private val ticketRepository: TicketRepository
+    private val ticketRepository: TicketRepository,
+    private val cashShiftRepository: CashShiftRepository,
+    private val sessionManager: SessionManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PosUiState())
@@ -27,15 +32,54 @@ class PosViewModel @Inject constructor(
     // Cache local
     private var fullProductList: List<Product> = emptyList()
 
+    // Aquí guardaremos el ID de la caja para ponerlo en el Ticket al cobrar
+    private var currentShiftId: Long? = null
+
     init {
+        checkOpenShift() // Revisar si hay caja abierta al entrar
         subscribeToCatalog()
     }
+
+    // --- LÓGICA DE TURNOS (CAJA) ---
+
+    private fun checkOpenShift() {
+        viewModelScope.launch {
+            val currentShift = cashShiftRepository.getCurrentOpenShift()
+            currentShiftId = currentShift?.id // Guardamos el ID en memoria
+
+            _uiState.update {
+                it.copy(
+                    isShiftOpen = currentShift != null,
+                    isCheckingShift = false
+                )
+            }
+        }
+    }
+
+    fun openShift(initialAmount: Double) {
+        viewModelScope.launch {
+            val currentUser = sessionManager.getCurrentUser()
+            if (currentUser == null) {
+                _uiState.update { it.copy(shiftErrorMessage = "Error: Usuario no identificado") }
+                return@launch
+            }
+
+            val result = cashShiftRepository.openShift(currentUser.id, initialAmount)
+
+            if (result.isSuccess) {
+                currentShiftId = result.getOrNull() // Guardamos el ID de la nueva caja
+                _uiState.update { it.copy(isShiftOpen = true, shiftErrorMessage = null) }
+            } else {
+                _uiState.update { it.copy(shiftErrorMessage = result.exceptionOrNull()?.message) }
+            }
+        }
+    }
+
+    // --- ACCIONES DE CATÁLOGO ---
 
     private fun subscribeToCatalog() {
         // Indicar al UI que se estan cargando datos
         _uiState.value = _uiState.value.copy(isLoadingCatalog = true)
-
-        //TODO: DESCOMENTAR PARA CUANDO SE USE LA BD REAL
 
         viewModelScope.launch {
             launch {
@@ -65,8 +109,6 @@ class PosViewModel @Inject constructor(
             }
         }
     }
-
-    // --- ACCIONES DE CATÁLOGO ---
 
     fun filterByCategory(category: Category?) {
         _uiState.value = _uiState.value.copy(selectedCategory = category)
@@ -112,8 +154,7 @@ class PosViewModel @Inject constructor(
                 price = product.price,
                 quantity = 1.0
             )
-            currentCart.add(newItem
-            )
+            currentCart.add(newItem)
         }
 
         val newTotal = currentCart.sumOf { it.totalLine }
@@ -127,7 +168,6 @@ class PosViewModel @Inject constructor(
     fun addManualAmount(amount: Double, description: String = "Varios") {
         val currentCart = _uiState.value.cartItems.toMutableList()
 
-        // Creamos un item sin 'product' porque no existe en el catálogo
         val newItem = CartItem(
             id = System.currentTimeMillis(),
             product = null,
@@ -152,16 +192,11 @@ class PosViewModel @Inject constructor(
         }
 
         val currentCart = _uiState.value.cartItems.toMutableList()
-
         val itemIndex = currentCart.indexOfFirst { it.id == cartItemId }
 
         if (itemIndex != -1) {
             val existingItem = currentCart[itemIndex]
-
-            currentCart[itemIndex] = existingItem.copy(
-                quantity = newQuantity
-            )
-
+            currentCart[itemIndex] = existingItem.copy(quantity = newQuantity)
             val newTotal = currentCart.sumOf { it.totalLine }
 
             _uiState.value = _uiState.value.copy(
@@ -177,11 +212,7 @@ class PosViewModel @Inject constructor(
 
         if (itemIndex != -1) {
             val existingItem = currentCart[itemIndex]
-
-            currentCart[itemIndex] = existingItem.copy(
-                price = newPrice
-            )
-
+            currentCart[itemIndex] = existingItem.copy(price = newPrice)
             val newTotal = currentCart.sumOf { it.totalLine }
 
             _uiState.value = _uiState.value.copy(
@@ -192,7 +223,6 @@ class PosViewModel @Inject constructor(
     }
 
     fun removeFromCart(cartItemId: Long) {
-        // Filtramos la lista dejando todos MENOS el que tenga ese ID
         val currentCart = _uiState.value.cartItems.filterNot { it.id == cartItemId }
         val newTotal = currentCart.sumOf { it.totalLine }
 
@@ -217,13 +247,11 @@ class PosViewModel @Inject constructor(
 
     fun onAmountReceivedChange(input: String) {
         val cleanInput = input.filter { it.isDigit() || it == '.' }
-
         val amount = cleanInput.toDoubleOrNull() ?: 0.0
         val total = _uiState.value.totalAmount
 
         val difference = amount - total
         val change = if (difference > 0) difference else 0.0
-
         val isSufficient = amount >= total && total > 0
 
         _uiState.value = _uiState.value.copy(
@@ -236,7 +264,6 @@ class PosViewModel @Inject constructor(
     fun finalizeSale() {
         val currentState = _uiState.value
 
-        // Doble validación de seguridad
         if (currentState.cartItems.isEmpty() || !currentState.isPaymentSufficient) {
             return
         }
@@ -253,9 +280,8 @@ class PosViewModel @Inject constructor(
                     )
                 }
 
-                // Armamos el Ticket completo
                 val ticket = com.devsMarr.pos_galeriaemi.domain.model.Ticket(
-                    shiftId = 1L, // TODO: Cambiar por el ID del turno activo
+                    shiftId = currentShiftId ?: 0L,
                     totalAmount = currentState.totalAmount,
                     receivedAmount = currentState.amountReceivedInput.toDoubleOrNull() ?: currentState.totalAmount,
                     changeAmount = currentState.changeDue,
@@ -264,10 +290,8 @@ class PosViewModel @Inject constructor(
                     details = domainDetails
                 )
 
-                // Mandamos a guardar a la Base de Datos
                 val generatedTicketId = ticketRepository.saveSale(ticket)
 
-                // Se notifica a la UI que la venta se registró correctamente
                 _uiState.value = _uiState.value.copy(
                     isSaleCompleted = true
                 )
@@ -280,7 +304,6 @@ class PosViewModel @Inject constructor(
     }
 
     fun acknowledgeSaleCompleted() {
-        // Reestablecemos el estado de la venta
         clearCart()
     }
 }

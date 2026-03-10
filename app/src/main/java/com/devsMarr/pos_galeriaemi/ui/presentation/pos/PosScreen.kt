@@ -14,10 +14,14 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.devsMarr.pos_galeriaemi.domain.model.Product
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Menu
 
 @Composable
 fun PosScreen(
-    viewModel: PosViewModel = hiltViewModel()
+    viewModel: PosViewModel = hiltViewModel(),
+    onOpenDrawer: () -> Unit = {},
+    onLogoutClick: () -> Unit = {}
 ) {
     // Subscripción al ViewModel
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -55,13 +59,35 @@ fun PosScreen(
                     .fillMaxHeight()
                     .background(MaterialTheme.colorScheme.background),
             ) {
-                PosSearchBar(
-                    query = uiState.searchQuery,
-                    onQueryChange = { newText ->
-                        viewModel.searchProduct(newText)
-                    },
-                    modifier = Modifier.padding(16.dp)
-                )
+                // --- CONTENEDOR DE MENÚ Y BÚSQUEDA ---
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // 1. El botón de Hamburguesa
+                    IconButton(
+                        onClick = onOpenDrawer,
+                        modifier = Modifier.padding(end = 8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Menu,
+                            contentDescription = "Abrir menú",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+
+                    // 2. Tu Barra de Búsqueda
+                    PosSearchBar(
+                        query = uiState.searchQuery,
+                        onQueryChange = { newText ->
+                            viewModel.searchProduct(newText)
+                        },
+                        // weight(1f) hace que se estire y ocupe el espacio restante
+                        modifier = Modifier.weight(1f)
+                    )
+                }
 
                 CategoryCarousel(
                     categories = uiState.categories,
@@ -244,6 +270,15 @@ fun PosScreen(
                     viewModel.addToCart(variosProduct)
                     showVariosDialog = false
                 }
+            )
+        }
+
+        if (!uiState.isCheckingShift && !uiState.isShiftOpen) {
+            OpenShiftDialog(
+                onConfirm = { initialAmount ->
+                    viewModel.openShift(initialAmount)
+                },
+                onLogoutClick = onLogoutClick
             )
         }
     }
