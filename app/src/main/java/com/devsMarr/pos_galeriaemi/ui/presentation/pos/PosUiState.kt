@@ -31,5 +31,10 @@ data class PosUiState (
     val amountReceivedInput: String = "", // String para manejar el teclado numérico en pantalla
     val changeDue: Double = 0.0,
     val isPaymentSufficient: Boolean = false,
-    val isSaleCompleted: Boolean = false
+    val isSaleCompleted: Boolean = false,
+
+    // --- SECCIÓN CAJA ---
+    val isCheckingShift: Boolean = true, // Para no mostrar el diálogo de golpe mientras carga
+    val isShiftOpen: Boolean = false,    // Para saber si ya abrieron la caja
+    val shiftErrorMessage: String? = null // Por si falla al abrir
 )
