@@ -51,6 +51,10 @@ class UserRepository @Inject constructor(
         return userDao.getUsersCount() > 0
     }
 
+    suspend fun getUserById(userId: Long): User? {
+        return userDao.getUserById(userId)?.toDomain()
+    }
+
     // --- MAGIA DE ENCRIPTACIÓN ---
     private fun hashPassword(password: String): String {
         val bytes = password.toByteArray()
@@ -58,4 +62,6 @@ class UserRepository @Inject constructor(
         val digest = md.digest(bytes)
         return digest.fold("") { str, it -> str + "%02x".format(it) }
     }
+
+
 }
