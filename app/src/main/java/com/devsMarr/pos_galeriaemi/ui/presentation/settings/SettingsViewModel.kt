@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.devsMarr.pos_galeriaemi.data.repository.SettingsRepository
 import com.devsMarr.pos_galeriaemi.domain.model.AppConfig
+import com.devsMarr.pos_galeriaemi.domain.manager.SessionManager
+import com.devsMarr.pos_galeriaemi.domain.model.UserRole
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,7 +17,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    private val sessionManager: SessionManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -30,6 +33,9 @@ class SettingsViewModel @Inject constructor(
             // Recolectamos el primer valor que nos arroje el DataStore
             val config = settingsRepository.appConfigFlow.first()
 
+            val currentUser = sessionManager.getCurrentUser()
+            // Si por alguna razón es nulo, asumimos CAJERO por seguridad
+            val role = currentUser?.role ?: UserRole.CASHIER
             _uiState.update { state ->
                 state.copy(
                     businessName = config.businessName,
@@ -39,6 +45,7 @@ class SettingsViewModel @Inject constructor(
                     printerMacAddress = config.printerMacAddress,
                     paperWidth = config.paperWidth,
                     isDarkMode = config.isDarkMode,
+                    currentUserRole = role,
                     isLoading = false // Ya cargó
                 )
             }

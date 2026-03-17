@@ -15,6 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.devsMarr.pos_galeriaemi.domain.model.UserRole
 import com.devsMarr.pos_galeriaemi.ui.presentation.settings.components.PaperWidthSelector
 import com.devsMarr.pos_galeriaemi.ui.presentation.settings.components.SectionHeader
 import com.devsMarr.pos_galeriaemi.ui.presentation.settings.components.SettingsSwitchRow
@@ -64,44 +65,45 @@ fun SettingsScreen(
             ) {
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // --- DETALLES DEL NEGOCIO ---
-                SectionHeader("Detalles del Negocio")
-                OutlinedTextField(
-                    value = uiState.businessName,
-                    onValueChange = { viewModel.onBusinessNameChange(it) },
-                    label = { Text("Nombre del Negocio") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-                OutlinedTextField(
-                    value = uiState.address,
-                    onValueChange = { viewModel.onAddressChange(it) },
-                    label = { Text("Dirección / Sucursal") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                OutlinedTextField(
-                    value = uiState.phone,
-                    onValueChange = { viewModel.onPhoneChange(it) },
-                    label = { Text("Teléfono de Contacto") },
-                    modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                    singleLine = true
-                )
+                if (uiState.currentUserRole == UserRole.ADMIN) {
+                    // --- DETALLES DEL NEGOCIO ---
+                    SectionHeader("Detalles del Negocio")
+                    OutlinedTextField(
+                        value = uiState.businessName,
+                        onValueChange = { viewModel.onBusinessNameChange(it) },
+                        label = { Text("Nombre del Negocio") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+                    OutlinedTextField(
+                        value = uiState.address,
+                        onValueChange = { viewModel.onAddressChange(it) },
+                        label = { Text("Dirección / Sucursal") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = uiState.phone,
+                        onValueChange = { viewModel.onPhoneChange(it) },
+                        label = { Text("Teléfono de Contacto") },
+                        modifier = Modifier.fillMaxWidth(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                        singleLine = true
+                    )
 
-                Divider(modifier = Modifier.padding(vertical = 8.dp))
+                    Divider(modifier = Modifier.padding(vertical = 8.dp))
 
-                // --- TICKET ---
-                SectionHeader("Impresión del Ticket")
-                OutlinedTextField(
-                    value = uiState.ticketFooter,
-                    onValueChange = { viewModel.onTicketFooterChange(it) },
-                    label = { Text("Mensaje de pie de página (Agradecimiento/Políticas)") },
-                    modifier = Modifier.fillMaxWidth(),
-                    minLines = 2
-                )
+                    // --- TICKET ---
+                    SectionHeader("Impresión del Ticket")
+                    OutlinedTextField(
+                        value = uiState.ticketFooter,
+                        onValueChange = { viewModel.onTicketFooterChange(it) },
+                        label = { Text("Mensaje de pie de página (Agradecimiento/Políticas)") },
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 2
+                    )
 
-                Divider(modifier = Modifier.padding(vertical = 8.dp))
-
+                    Divider(modifier = Modifier.padding(vertical = 8.dp))
+                }
                 // --- HARDWARE ---
                 SectionHeader("Hardware")
                 OutlinedTextField(
