@@ -24,4 +24,7 @@ sealed class Screen(val route: String) {
     object EditUser : Screen("edit_user_screen/{userId}") {
         fun createRoute(userId: Long) = "edit_user_screen/$userId"
     }
+
+    // --- Rutas de Configuración ---
+    object Settings : Screen("settings_screen")
 }

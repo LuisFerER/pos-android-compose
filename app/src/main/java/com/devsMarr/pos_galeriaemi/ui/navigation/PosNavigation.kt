@@ -21,6 +21,7 @@ import com.devsMarr.pos_galeriaemi.ui.presentation.user_form.UserFormScreen
 import com.devsMarr.pos_galeriaemi.ui.presentation.users.UserListScreen
 import com.devsMarr.pos_galeriaemi.ui.presentation.users.UserViewModel
 import com.devsMarr.pos_galeriaemi.ui.presentation.pos.components.PosDrawer // <-- IMPORT DEL DRAWER
+import com.devsMarr.pos_galeriaemi.ui.presentation.settings.SettingsScreen
 import kotlinx.coroutines.launch
 
 @Composable
@@ -93,7 +94,7 @@ fun PosNavigation(
                     onNavigateToInventory = { navController.navigate(Screen.Inventory.route) },
                     onNavigateToDailyReport = { /* TODO */ },
                     onNavigateToEmployees = { navController.navigate(Screen.Users.route) },
-                    onNavigateToSettings = { /* TODO */ },
+                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
                     onBackClick = { navController.popBackStack() }
                 )
             }
@@ -146,6 +147,10 @@ fun PosNavigation(
                 arguments = listOf(navArgument("userId") { type = NavType.LongType })
             ) {
                 UserFormScreen(onNavigateBack = { navController.popBackStack() })
+            }
+
+            composable(route = Screen.Settings.route) {
+                SettingsScreen(onNavigateBack = { navController.popBackStack() })
             }
         }
     }
