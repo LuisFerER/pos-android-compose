@@ -1,6 +1,8 @@
 package com.devsMarr.pos_galeriaemi.ui.presentation.pos.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -11,6 +13,8 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun CloseShiftDialog(
+    startingCash: Double, // <-- NUEVO: Fondo inicial
+    totalSales: Double,   // <-- NUEVO: Ventas del turno
     expectedAmount: Double,
     onConfirm: (actualAmount: Double, notes: String?) -> Unit,
     onDismiss: () -> Unit
@@ -29,11 +33,48 @@ fun CloseShiftDialog(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text(
-                    text = "Dinero calculado por el sistema: $${String.format("%.2f", expectedAmount)}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary
-                )
+                // --- DESGLOSE DEL CORTE ---
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                        .padding(12.dp)
+                ) {
+                    Text(
+                        text = "Resumen del Turno",
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("Fondo Inicial:", style = MaterialTheme.typography.bodyMedium)
+                        Text("$${String.format("%.2f", startingCash)}", style = MaterialTheme.typography.bodyMedium)
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("+ Ventas Efectivo:", style = MaterialTheme.typography.bodyMedium)
+                        Text("$${String.format("%.2f", totalSales)}", style = MaterialTheme.typography.bodyMedium)
+                    }
+
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("= TOTAL ESPERADO:", fontWeight = FontWeight.Bold)
+                        Text(
+                            text = "$${String.format("%.2f", expectedAmount)}",
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+                // --- FIN DEL DESGLOSE ---
 
                 OutlinedTextField(
                     value = actualAmountInput,
