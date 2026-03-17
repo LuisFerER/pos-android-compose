@@ -22,6 +22,8 @@ import com.devsMarr.pos_galeriaemi.ui.presentation.users.UserListScreen
 import com.devsMarr.pos_galeriaemi.ui.presentation.users.UserViewModel
 import com.devsMarr.pos_galeriaemi.ui.presentation.pos.components.PosDrawer // <-- IMPORT DEL DRAWER
 import com.devsMarr.pos_galeriaemi.ui.presentation.settings.SettingsScreen
+import com.devsMarr.pos_galeriaemi.ui.presentation.pos.components.PosDrawer
+import com.devsMarr.pos_galeriaemi.ui.presentation.pos.components.CloseShiftDialog
 import kotlinx.coroutines.launch
 
 @Composable
@@ -38,6 +40,8 @@ fun PosNavigation(
     val currentRoute = navBackStackEntry?.destination?.route
 
     val gesturesEnabled = currentRoute != Screen.Login.route
+
+    val navUiState by navViewModel.uiState.collectAsStateWithLifecycle()
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -60,11 +64,28 @@ fun PosNavigation(
                         navViewModel.logout()
                         scope.launch { drawerState.close() }
                         navController.navigate(Screen.Login.route) { popUpTo(0) }
+                    },
+                    onCloseShiftClick = {
+                        navViewModel.onIntentCloseShift()
+                        scope.launch { drawerState.close() }
                     }
                 )
             }
         }
     ) {
+        if (navUiState.showCloseShiftDialog) {
+            CloseShiftDialog(
+                expectedAmount = navUiState.expectedAmount,
+                onConfirm = { actualAmount, notes ->
+                    navViewModel.confirmCloseShift(actualAmount, notes) {
+                        // Una vez que la caja se cierra en BD, mandamos al Login
+                        navController.navigate(Screen.Login.route) { popUpTo(0) }
+                    }
+                },
+                onDismiss = { navViewModel.hideCloseShiftDialog() }
+            )
+        }
+
         // --- NAVHOST: SOLO RUTAS LIMPIAS ---
         NavHost(
             navController = navController,

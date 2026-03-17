@@ -11,6 +11,7 @@ import com.devsMarr.pos_galeriaemi.data.mapper.toEntity
 import com.devsMarr.pos_galeriaemi.data.mapper.toHeadEntity
 import com.devsMarr.pos_galeriaemi.domain.model.Ticket
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -70,5 +71,11 @@ class TicketRepository @Inject constructor(
                 ticketWithDetails.toDomain()
             }
         }
+    }
+
+    suspend fun getTotalSalesForShiftClosure(shiftId: Long): Double {
+        // .firstOrNull() toma el primer valor que escupa el Flow y cancela la suscripción,
+        // perfecto para cálculos de un solo uso como el Corte de Caja.
+        return ticketHeadDao.getTotalSalesByShift(shiftId).firstOrNull() ?: 0.0
     }
 }
