@@ -60,6 +60,10 @@ fun PosNavigation(
                         navController.navigate(Screen.AdminDashboard.route) { popUpTo(Screen.Pos.route) }
                         scope.launch { drawerState.close() }
                     },
+                    onNavigateToSettings = {
+                        navController.navigate(Screen.Settings.route) { popUpTo(Screen.Pos.route) }
+                        scope.launch { drawerState.close() }
+                    },
                     onLogoutClick = {
                         navViewModel.logout()
                         scope.launch { drawerState.close() }

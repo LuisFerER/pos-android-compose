@@ -26,6 +26,7 @@ fun PosDrawer(
     currentRoute: String?,
     onNavigateToPos: () -> Unit,
     onNavigateToAdmin: () -> Unit,
+    onNavigateToSettings: () -> Unit,
     onLogoutClick: () -> Unit,
     onCloseShiftClick: () -> Unit
 ) {
@@ -72,6 +73,14 @@ fun PosDrawer(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
         )
 
+        NavigationDrawerItem(
+            icon = { Icon(Icons.Default.Lock, contentDescription = null) }, // Ícono de candado
+            label = { Text("Corte de Caja") },
+            selected = false, // Nunca se queda "seleccionado" porque es una acción, no una pantalla
+            onClick = onCloseShiftClick,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+        )
+
         if (currentUser.role == UserRole.ADMIN) {
             NavigationDrawerItem(
                 icon = { Icon(Icons.Default.Settings, contentDescription = null) },
@@ -83,10 +92,10 @@ fun PosDrawer(
         }
 
         NavigationDrawerItem(
-            icon = { Icon(Icons.Default.Lock, contentDescription = null) }, // Ícono de candado
-            label = { Text("Corte de Caja") },
-            selected = false, // Nunca se queda "seleccionado" porque es una acción, no una pantalla
-            onClick = onCloseShiftClick,
+            icon = { Icon(Icons.Default.Settings, contentDescription = null) },
+            label = { Text("Configuración") },
+            selected = currentRoute == Screen.Settings.route,
+            onClick = onNavigateToSettings,
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
         )
 
