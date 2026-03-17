@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import com.devsMarr.pos_galeriaemi.domain.model.User
 import com.devsMarr.pos_galeriaemi.domain.model.UserRole
 import com.devsMarr.pos_galeriaemi.ui.navigation.Screen
+import androidx.compose.material.icons.filled.Lock
 
 @Composable
 fun PosDrawer(
@@ -25,7 +26,8 @@ fun PosDrawer(
     currentRoute: String?,
     onNavigateToPos: () -> Unit,
     onNavigateToAdmin: () -> Unit,
-    onLogoutClick: () -> Unit
+    onLogoutClick: () -> Unit,
+    onCloseShiftClick: () -> Unit
 ) {
     ModalDrawerSheet(modifier = Modifier.width(300.dp)) {
         // --- CABECERA DEL MENÚ ---
@@ -79,6 +81,14 @@ fun PosDrawer(
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
             )
         }
+
+        NavigationDrawerItem(
+            icon = { Icon(Icons.Default.Lock, contentDescription = null) }, // Ícono de candado
+            label = { Text("Corte de Caja") },
+            selected = false, // Nunca se queda "seleccionado" porque es una acción, no una pantalla
+            onClick = onCloseShiftClick,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+        )
 
         Spacer(modifier = Modifier.weight(1f))
         HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
