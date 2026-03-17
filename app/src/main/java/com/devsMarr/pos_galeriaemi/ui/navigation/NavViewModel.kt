@@ -14,6 +14,8 @@ import javax.inject.Inject
 
 data class NavUiState(
     val showCloseShiftDialog: Boolean = false,
+    val startingCash: Double = 0.0,
+    val totalSales: Double = 0.0,
     val expectedAmount: Double = 0.0
 )
 
@@ -51,6 +53,8 @@ class NavViewModel @Inject constructor(
 
                 _uiState.value = _uiState.value.copy(
                     showCloseShiftDialog = true,
+                    startingCash = currentShift.startingCash,
+                    totalSales = totalSales,
                     expectedAmount = expected
                 )
             }

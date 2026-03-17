@@ -79,10 +79,11 @@ fun PosNavigation(
     ) {
         if (navUiState.showCloseShiftDialog) {
             CloseShiftDialog(
+                startingCash = navUiState.startingCash,
+                totalSales = navUiState.totalSales,
                 expectedAmount = navUiState.expectedAmount,
                 onConfirm = { actualAmount, notes ->
                     navViewModel.confirmCloseShift(actualAmount, notes) {
-                        // Una vez que la caja se cierra en BD, mandamos al Login
                         navController.navigate(Screen.Login.route) { popUpTo(0) }
                     }
                 },
