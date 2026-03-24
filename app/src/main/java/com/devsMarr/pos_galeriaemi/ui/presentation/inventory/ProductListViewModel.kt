@@ -8,6 +8,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -19,24 +20,23 @@ class ProductListViewModel @Inject constructor(
     private val categoryRepository: CategoryRepository
 ) : ViewModel() {
 
-    // Variable privada para controlar la selección del usuario (null = Todas)
     private val _selectedCategoryId = MutableStateFlow<Long?>(null)
 
-    // El flujo principal de Estado que la UI va a observar
+    // --- Estado para manejar mensajes de error ---
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
     val uiState: StateFlow<InventoryUiState> = combine(
         productRepository.getAllActiveProducts(),
         categoryRepository.getAllCategories(),
         _selectedCategoryId
     ) { products, categories, selectedId ->
-
-        // Lógica de filtrado: Si selectedId es null, pasa todo; si no, filtra.
         val filteredProducts = if (selectedId == null) {
             products
         } else {
             products.filter { it.categoryId == selectedId }
         }
 
-        // Crea el objeto de estado final importado desde InventoryUiState.kt
         InventoryUiState(
             isLoading = false,
             categories = categories,
@@ -48,8 +48,6 @@ class ProductListViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = InventoryUiState(isLoading = true)
     )
-
-    // --- Acciones de Usuario ---
 
     fun onCategorySelected(categoryId: Long?) {
         _selectedCategoryId.value = categoryId
@@ -64,18 +62,20 @@ class ProductListViewModel @Inject constructor(
     fun deleteCategory(categoryId: Long) {
         viewModelScope.launch {
             try {
-                // Llamamos al repositorio para borrar la categoría
                 categoryRepository.deleteCategory(categoryId)
 
-                // Si borramos la categoría que estaba seleccionada, regresamos el filtro a "Todas"
                 if (_selectedCategoryId.value == categoryId) {
                     _selectedCategoryId.value = null
                 }
             } catch (e: Exception) {
-                // Como pusiste ForeignKey.RESTRICT en tu BD, si la categoría
-                // ya tiene productos, SQLite lanzará un error aquí y NO la borrará.
-                // ¡Esa es una excelente protección de datos!
+                // --- En lugar de fallar en silencio, mandamos el mensaje a la UI ---
+                _errorMessage.value = "No se puede eliminar esta categoría porque aún tiene productos registrados. Elimina o reasigna los productos primero."
             }
         }
+    }
+
+    // --- Función para limpiar el error cuando el usuario cierre la alerta ---
+    fun clearErrorMessage() {
+        _errorMessage.value = null
     }
 }

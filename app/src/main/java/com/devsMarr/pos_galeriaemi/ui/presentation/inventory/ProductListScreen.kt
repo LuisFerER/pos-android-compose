@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -27,9 +28,14 @@ fun ProductListScreen(
     onNavigateToAddProduct: () -> Unit,
     onNavigateToEditProduct: (Long) -> Unit,
     onNavigateToAddCategory: () -> Unit,
-    onNavigateToEditCategory: (Long) -> Unit // <-- NUEVO: Para editar la categoría
+    onNavigateToEditCategory: (Long) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
+
+    // --- Estados para controlar los diálogos de confirmación ---
+    var categoryToDelete by remember { mutableStateOf<Long?>(null) }
+    var productToDelete by remember { mutableStateOf<Long?>(null) }
 
     Scaffold(
         topBar = {
@@ -57,7 +63,6 @@ fun ProductListScreen(
                 .padding(innerPadding)
                 .fillMaxSize()
         ) {
-
             // --- SECCIÓN A: CARRUSEL DE CATEGORÍAS ---
             LazyRow(
                 modifier = Modifier
@@ -67,16 +72,7 @@ fun ProductListScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // 1. Botón "Todas"
-                item {
-                    FilterChip(
-                        selected = uiState.selectedCategoryId == null,
-                        onClick = { viewModel.onCategorySelected(null) },
-                        label = { Text("Todas") }
-                    )
-                }
-
-                // 2. Botón "+ Nueva"
+                // 1. Botón "+ Nueva"
                 item {
                     AssistChip(
                         onClick = onNavigateToAddCategory,
@@ -91,17 +87,25 @@ fun ProductListScreen(
                     )
                 }
 
-                // 3. Categorías Dinámicas con Menú Emergente (LONG CLICK)
+                // 2. Botón "Todas"
+                item {
+                    FilterChip(
+                        selected = uiState.selectedCategoryId == null,
+                        onClick = { viewModel.onCategorySelected(null) },
+                        label = { Text("Todas") }
+                    )
+                }
+
+                // 3. Categorías Dinámicas
                 items(items = uiState.categories, key = { it.id }) { category ->
                     var showMenu by remember { mutableStateOf(false) }
                     val isSelected = uiState.selectedCategoryId == category.id
 
-                    // Usamos un Box para anclar el menú emergente exactamente debajo del chip
                     Box {
                         Surface(
                             modifier = Modifier.combinedClickable(
-                                onClick = { viewModel.onCategorySelected(category.id) }, // Toque normal
-                                onLongClick = { showMenu = true }                        // Toque largo
+                                onClick = { viewModel.onCategorySelected(category.id) },
+                                onLongClick = { showMenu = true }
                             ),
                             shape = RoundedCornerShape(8.dp),
                             color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
@@ -113,7 +117,6 @@ fun ProductListScreen(
                             )
                         }
 
-                        // El menú que aparece al dejar presionado
                         DropdownMenu(
                             expanded = showMenu,
                             onDismissRequest = { showMenu = false }
@@ -130,8 +133,8 @@ fun ProductListScreen(
                                 text = { Text("Eliminar", color = MaterialTheme.colorScheme.error) },
                                 onClick = {
                                     showMenu = false
-                                    // LLAMADA AL VIEWMODEL PARA BORRAR
-                                    viewModel.deleteCategory(category.id)
+                                    // NUEVO: En lugar de borrar directo, guardamos el ID para mostrar el diálogo
+                                    categoryToDelete = category.id
                                 },
                                 leadingIcon = { Icon(Icons.Default.Delete, contentDescription = "Eliminar", tint = MaterialTheme.colorScheme.error) }
                             )
@@ -160,11 +163,81 @@ fun ProductListScreen(
                         ProductItemCard(
                             product = product,
                             onEditClick = { onNavigateToEditProduct(product.id) },
-                            onDeleteClick = { viewModel.onDeleteProduct(product.id) }
+                            // NUEVO: En lugar de borrar directo, guardamos el ID para mostrar el diálogo
+                            onDeleteClick = { productToDelete = product.id }
                         )
                     }
                 }
             }
+        }
+
+        // =======================================================================
+        // ZONA DE DIÁLOGOS EMERGENTES
+        // =======================================================================
+
+        // 1. Confirmación para eliminar CATEGORÍA
+        if (categoryToDelete != null) {
+            AlertDialog(
+                onDismissRequest = { categoryToDelete = null },
+                icon = { Icon(Icons.Default.Warning, contentDescription = "Advertencia", tint = MaterialTheme.colorScheme.error) },
+                title = { Text("Eliminar Categoría") },
+                text = { Text("¿Estás seguro de que deseas eliminar esta categoría? Si tiene productos asignados, la acción será cancelada por seguridad.") },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            viewModel.deleteCategory(categoryToDelete!!)
+                            categoryToDelete = null // Cerramos el diálogo
+                        }
+                    ) {
+                        Text("Sí, Eliminar", color = MaterialTheme.colorScheme.error)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { categoryToDelete = null }) {
+                        Text("Cancelar")
+                    }
+                }
+            )
+        }
+
+        // 2. Confirmación para eliminar PRODUCTO
+        if (productToDelete != null) {
+            AlertDialog(
+                onDismissRequest = { productToDelete = null },
+                icon = { Icon(Icons.Default.Warning, contentDescription = "Advertencia", tint = MaterialTheme.colorScheme.error) },
+                title = { Text("Eliminar Producto") },
+                text = { Text("¿Estás seguro de que deseas eliminar este producto?") },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            viewModel.onDeleteProduct(productToDelete!!)
+                            productToDelete = null // Cerramos el diálogo
+                        }
+                    ) {
+                        Text("Sí, Eliminar", color = MaterialTheme.colorScheme.error)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { productToDelete = null }) {
+                        Text("Cancelar")
+                    }
+                }
+            )
+        }
+
+        // 3. Alerta de ERROR (Viene desde el ViewModel si la base de datos bloqueó la eliminación)
+        if (errorMessage != null) {
+            AlertDialog(
+                onDismissRequest = { viewModel.clearErrorMessage() },
+                icon = { Icon(Icons.Default.Warning, contentDescription = "Advertencia", tint = MaterialTheme.colorScheme.error) },
+                title = { Text("Acción Denegada") },
+                text = { Text(errorMessage!!) },
+                confirmButton = {
+                    TextButton(onClick = { viewModel.clearErrorMessage() }) {
+                        Text("Entendido")
+                    }
+                }
+            )
         }
     }
 }
