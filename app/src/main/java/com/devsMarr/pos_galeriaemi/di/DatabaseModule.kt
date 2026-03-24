@@ -6,6 +6,7 @@ import com.devsMarr.pos_galeriaemi.data.local.PosDatabase
 import com.devsMarr.pos_galeriaemi.data.local.dao.CashShiftDao
 import com.devsMarr.pos_galeriaemi.data.local.dao.CategoryDao
 import com.devsMarr.pos_galeriaemi.data.local.dao.ProductDao
+import com.devsMarr.pos_galeriaemi.data.local.dao.ReportDao
 import com.devsMarr.pos_galeriaemi.data.local.dao.TicketDetailDao
 import com.devsMarr.pos_galeriaemi.data.local.dao.TicketHeadDao
 import com.devsMarr.pos_galeriaemi.data.local.dao.UserDao
@@ -53,5 +54,10 @@ object DatabaseModule {
     @Provides
     fun provideUserDao(database: PosDatabase): UserDao {
         return database.userDao()
+    }
+
+    @Provides
+    fun provideReportDao(database: PosDatabase): ReportDao {
+        return database.reportDao()
     }
 }

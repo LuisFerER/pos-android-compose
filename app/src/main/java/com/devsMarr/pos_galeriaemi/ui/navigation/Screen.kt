@@ -27,4 +27,6 @@ sealed class Screen(val route: String) {
 
     // --- Rutas de Configuración ---
     object Settings : Screen("settings_screen")
+
+    object DailyReport : Screen("daily_report")
 }
