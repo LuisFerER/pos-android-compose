@@ -5,6 +5,7 @@ import androidx.room.RoomDatabase
 import com.devsMarr.pos_galeriaemi.data.local.dao.CashShiftDao
 import com.devsMarr.pos_galeriaemi.data.local.dao.CategoryDao
 import com.devsMarr.pos_galeriaemi.data.local.dao.ProductDao
+import com.devsMarr.pos_galeriaemi.data.local.dao.ReportDao
 import com.devsMarr.pos_galeriaemi.data.local.dao.TicketDetailDao
 import com.devsMarr.pos_galeriaemi.data.local.dao.TicketHeadDao
 import com.devsMarr.pos_galeriaemi.data.local.dao.UserDao
@@ -44,5 +45,6 @@ abstract class PosDatabase : RoomDatabase() {
 
     abstract fun userDao(): UserDao
 
+    abstract fun reportDao(): ReportDao
 
 }
