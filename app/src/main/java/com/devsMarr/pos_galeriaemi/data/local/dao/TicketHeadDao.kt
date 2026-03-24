@@ -35,8 +35,13 @@ interface TicketHeadDao {
     @Query("SELECT SUM(totalAmount) FROM ticket_heads WHERE shiftId = :shiftId AND status = 'COMPLETED'")
     fun getTotalSalesByShift(shiftId: Long): Flow<Double?>
 
-    // NUEVO: Obtener los tickets completos (Cabecera + Detalles) de un turno
+    // Obtener los tickets completos (Cabecera + Detalles) de un turno
     @Transaction
     @Query("SELECT * FROM ticket_heads WHERE shiftId = :shiftId ORDER BY timestamp DESC")
     fun getFullTicketsByShift(shiftId: Long): Flow<List<TicketWithDetails>>
+
+    // Obtener TODOS los tickets de la historia (para la pantalla de Historial)
+    @Transaction
+    @Query("SELECT * FROM ticket_heads ORDER BY timestamp DESC")
+    fun getAllFullTicketsHistory(): Flow<List<TicketWithDetails>>
 }

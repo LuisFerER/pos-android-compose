@@ -78,4 +78,10 @@ class TicketRepository @Inject constructor(
         // perfecto para cálculos de un solo uso como el Corte de Caja.
         return ticketHeadDao.getTotalSalesByShift(shiftId).firstOrNull() ?: 0.0
     }
+
+    // Función para la pantalla de Historial General
+    fun getAllTicketsHistory(): Flow<List<Ticket>> {
+        return ticketHeadDao.getAllFullTicketsHistory()
+            .map { list -> list.map { it.toDomain() } }
+    }
 }

@@ -36,12 +36,11 @@ class TicketHistoryViewModel @Inject constructor(
     }
 
     private fun loadHistory() {
-        val currentShiftId = 1L // TODO: Cambiar por el ID del turno activo real
-
         viewModelScope.launch {
-            ticketRepository.getTicketsHistory(currentShiftId).collect { ticketList ->
+            ticketRepository.getAllTicketsHistory().collect { ticketList ->
                 allTicketsCache = ticketList
-                // Al inicio, filtramos para mostrar solo hoy
+
+                // Filtramos para mostrar solo los del rango de fechas seleccionado en la UI
                 val startLocal = getLocalStartOfDay(_uiState.value.startDateMillis)
                 val endLocal = getLocalEndOfDay(_uiState.value.endDateMillis)
                 filterTicketsByDateRange(startLocal, endLocal)
