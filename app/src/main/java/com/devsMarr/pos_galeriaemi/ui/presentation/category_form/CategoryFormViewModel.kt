@@ -16,18 +16,33 @@ import javax.inject.Inject
 @HiltViewModel
 class CategoryFormViewModel @Inject constructor(
     private val categoryRepository: CategoryRepository,
-    savedStateHandle: SavedStateHandle // Para saber si venimos a editar una existente
+    savedStateHandle: SavedStateHandle // Atrapa los argumentos de la navegación
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CategoryFormUiState())
     val uiState: StateFlow<CategoryFormUiState> = _uiState.asStateFlow()
 
     init {
-        // Buscamos si nos pasaron un ID por navegación
+        // Atrapamos el ID que viene desde PosNavigation.kt
+        // Ojo: "categoryId" debe llamarse exactamente igual que en navArgument("categoryId")
         val categoryId = savedStateHandle.get<Long>("categoryId")
+
         if (categoryId != null && categoryId != -1L) {
-            // Aún no tenemos un getCategoryById en el repositorio, pero si quisieras editar, aquí lo cargarías
-            // Por ahora lo dejaremos preparado
+            // ¡Es una edición! Vamos por los datos a la BD
+            viewModelScope.launch {
+                val category = categoryRepository.getCategoryById(categoryId)
+
+                if (category != null) {
+                    // Rellenamos el estado con los datos existentes
+                    _uiState.update { currentState ->
+                        currentState.copy(
+                            id = category.id,
+                            name = category.name,
+                            color = category.color
+                        )
+                    }
+                }
+            }
         }
     }
 
@@ -44,7 +59,6 @@ class CategoryFormViewModel @Inject constructor(
     fun saveCategory() {
         val currentState = _uiState.value
 
-        // Validación básica: que el nombre no esté vacío
         if (currentState.name.isBlank()) {
             return
         }
@@ -52,22 +66,21 @@ class CategoryFormViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isSaving = true) }
 
-            // Creamos el objeto de Dominio
             val category = Category(
-                id = currentState.id ?: 0L, // Si es 0, Room crea uno nuevo automáticamente
+                id = currentState.id ?: 0L,
                 name = currentState.name.trim(),
                 color = currentState.color,
                 sortOrder = 0
             )
 
-            // Guardamos usando el Repositorio
+            // Room es inteligente: si el ID es 0, hace un INSERT.
+            // Si el ID ya existe (porque lo rellenamos en el init), hace un UPDATE.
             if (currentState.id == null || currentState.id == 0L) {
                 categoryRepository.insertCategory(category)
             } else {
                 categoryRepository.updateCategory(category)
             }
 
-            // Avisamos a la UI que fue un éxito
             _uiState.update { it.copy(isSaving = false, saveSuccess = true) }
         }
     }

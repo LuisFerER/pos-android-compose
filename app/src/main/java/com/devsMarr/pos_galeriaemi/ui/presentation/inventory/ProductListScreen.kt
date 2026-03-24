@@ -1,15 +1,18 @@
 package com.devsMarr.pos_galeriaemi.ui.presentation.inventory
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -17,16 +20,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun ProductListScreen(
-    // Inyectamos el ViewModel automáticamente
     viewModel: ProductListViewModel = hiltViewModel(),
-    // Navegación (Callbacks)
     onNavigateToAddProduct: () -> Unit,
-    onNavigateToEditProduct: (Long) -> Unit
+    onNavigateToEditProduct: (Long) -> Unit,
+    onNavigateToAddCategory: () -> Unit,
+    onNavigateToEditCategory: (Long) -> Unit // <-- NUEVO: Para editar la categoría
 ) {
-    // Observamos el ESTADO ÚNICO
     val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
@@ -50,65 +52,111 @@ fun ProductListScreen(
         }
     ) { innerPadding ->
 
-        // Estructura Principal: Columna (Arriba: Categorías, Abajo: Productos)
         Column(
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
         ) {
 
-            // --- SECCIÓN A: CARRUSEL DE CATEGORÍAS (LazyRow) ---
+            // --- SECCIÓN A: CARRUSEL DE CATEGORÍAS ---
             LazyRow(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 12.dp), // Separación vertical
-                contentPadding = PaddingValues(horizontal = 16.dp), // Margen a los lados
-                horizontalArrangement = Arrangement.spacedBy(8.dp) // Espacio entre chips
+                    .padding(vertical = 12.dp),
+                contentPadding = PaddingValues(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                // Chip "Todas" (Manual)
+                // 1. Botón "Todas"
                 item {
-                    CategoryFilterChip(
-                        category = null, // null representa "Todas"
-                        isSelected = uiState.selectedCategoryId == null,
-                        onSelected = { viewModel.onCategorySelected(null) }
+                    FilterChip(
+                        selected = uiState.selectedCategoryId == null,
+                        onClick = { viewModel.onCategorySelected(null) },
+                        label = { Text("Todas") }
                     )
                 }
 
-                // Chips Dinámicos (Desde la Base de Datos)
-                items(items = uiState.categories, key = { it.id }) { category ->
-                    CategoryFilterChip(
-                        category = category,
-                        isSelected = uiState.selectedCategoryId == category.id,
-                        onSelected = { viewModel.onCategorySelected(category.id) }
+                // 2. Botón "+ Nueva"
+                item {
+                    AssistChip(
+                        onClick = onNavigateToAddCategory,
+                        label = { Text("Nueva", fontWeight = FontWeight.Bold) },
+                        leadingIcon = {
+                            Icon(Icons.Default.Add, contentDescription = "Agregar Categoría", modifier = Modifier.size(AssistChipDefaults.IconSize))
+                        },
+                        colors = AssistChipDefaults.assistChipColors(
+                            leadingIconContentColor = MaterialTheme.colorScheme.primary,
+                            labelColor = MaterialTheme.colorScheme.primary
+                        )
                     )
+                }
+
+                // 3. Categorías Dinámicas con Menú Emergente (LONG CLICK)
+                items(items = uiState.categories, key = { it.id }) { category ->
+                    var showMenu by remember { mutableStateOf(false) }
+                    val isSelected = uiState.selectedCategoryId == category.id
+
+                    // Usamos un Box para anclar el menú emergente exactamente debajo del chip
+                    Box {
+                        Surface(
+                            modifier = Modifier.combinedClickable(
+                                onClick = { viewModel.onCategorySelected(category.id) }, // Toque normal
+                                onLongClick = { showMenu = true }                        // Toque largo
+                            ),
+                            shape = RoundedCornerShape(8.dp),
+                            color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
+                        ) {
+                            Text(
+                                text = category.name,
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                                color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        // El menú que aparece al dejar presionado
+                        DropdownMenu(
+                            expanded = showMenu,
+                            onDismissRequest = { showMenu = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Editar") },
+                                onClick = {
+                                    showMenu = false
+                                    onNavigateToEditCategory(category.id)
+                                },
+                                leadingIcon = { Icon(Icons.Default.Edit, contentDescription = "Editar") }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Eliminar", color = MaterialTheme.colorScheme.error) },
+                                onClick = {
+                                    showMenu = false
+                                    // LLAMADA AL VIEWMODEL PARA BORRAR
+                                    viewModel.deleteCategory(category.id)
+                                },
+                                leadingIcon = { Icon(Icons.Default.Delete, contentDescription = "Eliminar", tint = MaterialTheme.colorScheme.error) }
+                            )
+                        }
+                    }
                 }
             }
 
-            Divider(color = Color.LightGray.copy(alpha = 0.5f))
+            HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f))
 
-            // --- SECCIÓN B: LISTA DE PRODUCTOS (LazyColumn) ---
+            // --- SECCIÓN B: LISTA DE PRODUCTOS ---
             if (uiState.isLoading) {
-                // Cargando...
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
             } else if (uiState.products.isEmpty()) {
-                // Lista Vacía
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(
-                        text = "No hay productos en esta categoría",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = Color.Gray
-                    )
+                    Text("No hay productos en esta categoría", style = MaterialTheme.typography.bodyLarge, color = Color.Gray)
                 }
             } else {
-                // Lista con Datos
                 LazyColumn(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(items = uiState.products, key = { it.id }) { product ->
-                        // Usamos el componente que creamos en el paso anterior
                         ProductItemCard(
                             product = product,
                             onEditClick = { onNavigateToEditProduct(product.id) },

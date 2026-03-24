@@ -60,4 +60,22 @@ class ProductListViewModel @Inject constructor(
             productRepository.deleteProduct(productId)
         }
     }
+
+    fun deleteCategory(categoryId: Long) {
+        viewModelScope.launch {
+            try {
+                // Llamamos al repositorio para borrar la categoría
+                categoryRepository.deleteCategory(categoryId)
+
+                // Si borramos la categoría que estaba seleccionada, regresamos el filtro a "Todas"
+                if (_selectedCategoryId.value == categoryId) {
+                    _selectedCategoryId.value = null
+                }
+            } catch (e: Exception) {
+                // Como pusiste ForeignKey.RESTRICT en tu BD, si la categoría
+                // ya tiene productos, SQLite lanzará un error aquí y NO la borrará.
+                // ¡Esa es una excelente protección de datos!
+            }
+        }
+    }
 }

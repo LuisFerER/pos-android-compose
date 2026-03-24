@@ -35,4 +35,8 @@ class CategoryRepository @Inject constructor(
     suspend fun deleteCategory(categoryId: Long) {
         categoryDao.deleteCategoryById(categoryId)
     }
+
+    suspend fun getCategoryById(id: Long): Category? {
+        return categoryDao.getCategoryById(id)?.toDomain()
+    }
 }
