@@ -53,6 +53,15 @@ class ProductRepository @Inject constructor(
     }
 
     suspend fun deleteProduct(productId: Long) {
-        productDao.deleteProduct(productId)
+        // Primero preguntamos al DAO: ¿Este producto se ha vendido alguna vez?
+        val salesCount = productDao.getProductSalesCount(productId)
+
+        if (salesCount > 0) {
+            // Ya está en algún ticket. No lo podemos destruir, solo lo ocultamos.
+            productDao.softDeleteProduct(productId)
+        } else {
+            // ¡Nadie lo ha comprado nunca! Lo destruimos físicamente.
+            productDao.hardDeleteProduct(productId)
+        }
     }
 }

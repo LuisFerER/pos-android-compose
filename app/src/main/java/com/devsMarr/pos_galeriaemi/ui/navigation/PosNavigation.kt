@@ -24,6 +24,7 @@ import com.devsMarr.pos_galeriaemi.ui.presentation.pos.components.PosDrawer // <
 import com.devsMarr.pos_galeriaemi.ui.presentation.settings.SettingsScreen
 import com.devsMarr.pos_galeriaemi.ui.presentation.pos.components.PosDrawer
 import com.devsMarr.pos_galeriaemi.ui.presentation.pos.components.CloseShiftDialog
+import com.devsMarr.pos_galeriaemi.ui.presentation.reports.DailyReportScreen
 import kotlinx.coroutines.launch
 
 @Composable
@@ -118,7 +119,7 @@ fun PosNavigation(
                 AdminDashboardScreen(
                     onNavigateToDateReports = { navController.navigate(Screen.TicketHistory.route) },
                     onNavigateToInventory = { navController.navigate(Screen.Inventory.route) },
-                    onNavigateToDailyReport = { /* TODO */ },
+                    onNavigateToDailyReport = { navController.navigate(Screen.DailyReport.route) },
                     onNavigateToEmployees = { navController.navigate(Screen.Users.route) },
                     onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
                     onBackClick = { navController.popBackStack() }
@@ -132,7 +133,9 @@ fun PosNavigation(
             composable(route = Screen.Inventory.route) {
                 ProductListScreen(
                     onNavigateToAddProduct = { navController.navigate(Screen.AddProduct.route) },
-                    onNavigateToEditProduct = { productId -> navController.navigate(Screen.EditProduct.createRoute(productId)) }
+                    onNavigateToEditProduct = { productId -> navController.navigate(Screen.EditProduct.createRoute(productId)) },
+                    onNavigateToAddCategory = { navController.navigate(Screen.AddCategory.route) },
+                    onNavigateToEditCategory = { categoryId -> navController.navigate(Screen.EditCategory.createRoute(categoryId)) }
                 )
             }
 
@@ -177,6 +180,18 @@ fun PosNavigation(
 
             composable(route = Screen.Settings.route) {
                 SettingsScreen(onNavigateBack = { navController.popBackStack() })
+            }
+
+            composable(route = Screen.DailyReport.route) {
+                DailyReportScreen(onNavigateBack = { navController.popBackStack() })
+            }
+
+            composable(
+                route = Screen.EditCategory.route,
+                arguments = listOf(navArgument("categoryId") { type = NavType.LongType })
+            ) {
+                // Reutilizamos tu formulario de categorías
+                CategoryFormScreen(onNavigateBack = { navController.popBackStack() })
             }
         }
     }

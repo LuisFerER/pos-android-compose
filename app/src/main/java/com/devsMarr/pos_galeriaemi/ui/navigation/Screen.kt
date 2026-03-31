@@ -27,4 +27,12 @@ sealed class Screen(val route: String) {
 
     // --- Rutas de Configuración ---
     object Settings : Screen("settings_screen")
+
+    object DailyReport : Screen("daily_report")
+
+    object EditCategory : Screen("edit_category/{categoryId}") {
+        fun createRoute(categoryId: Long): String {
+            return "edit_category/$categoryId"
+        }
+    }
 }
