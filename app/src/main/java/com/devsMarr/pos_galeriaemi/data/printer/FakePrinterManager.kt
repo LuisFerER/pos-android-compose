@@ -62,7 +62,6 @@ class FakePrinterManager @Inject constructor() : PrinterService {
 
     override suspend fun printTicket(ticket: Ticket, config: AppConfig) {
         if (_status.value != PrinterStatus.Connected) return
-
         // Aquí usamos la misma lógica de formato que diseñamos antes,
         // pero enviándola a nuestra función printText falsa
         Log.d("FakePrinter", "\n--- INICIANDO IMPRESIÓN DE TICKET ---")

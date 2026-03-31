@@ -1,5 +1,6 @@
 package com.devsMarr.pos_galeriaemi.ui.presentation.pos
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.devsMarr.pos_galeriaemi.data.repository.CategoryRepository
@@ -307,11 +308,13 @@ class PosViewModel @Inject constructor(
                 launch(Dispatchers.IO) {
                     try {
                         val config = settingsRepository.appConfigFlow.first()
-
+                        printerService.connect(config.printerMacAddress)
                         printerService.printTicket(savedTicket, config)
 
                     } catch (e: Exception) {
                         android.util.Log.e("POS_DEBUG", "Error al imprimir el ticket: ${e.message}")
+                    } finally {
+                        printerService.disconnect()
                     }
                 }
 
