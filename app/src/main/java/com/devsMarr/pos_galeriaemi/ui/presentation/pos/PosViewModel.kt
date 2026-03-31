@@ -8,11 +8,15 @@ import com.devsMarr.pos_galeriaemi.domain.model.Product
 import com.devsMarr.pos_galeriaemi.data.repository.ProductRepository
 import com.devsMarr.pos_galeriaemi.data.repository.TicketRepository
 import com.devsMarr.pos_galeriaemi.data.repository.CashShiftRepository
+import com.devsMarr.pos_galeriaemi.data.repository.SettingsRepository
 import com.devsMarr.pos_galeriaemi.domain.manager.SessionManager
+import com.devsMarr.pos_galeriaemi.domain.service.PrinterService
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -23,7 +27,9 @@ class PosViewModel @Inject constructor(
     private val categoryRepository: CategoryRepository,
     private val ticketRepository: TicketRepository,
     private val cashShiftRepository: CashShiftRepository,
-    private val sessionManager: SessionManager
+    private val sessionManager: SessionManager,
+    private val settingsRepository: SettingsRepository,
+    private val printerService: PrinterService
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PosUiState())
@@ -285,16 +291,29 @@ class PosViewModel @Inject constructor(
                     totalAmount = currentState.totalAmount,
                     receivedAmount = currentState.amountReceivedInput.toDoubleOrNull() ?: currentState.totalAmount,
                     changeAmount = currentState.changeDue,
-                    paymentMethod = "CASH",
+                    paymentMethod = "EFECTIVO",
                     status = "COMPLETED",
                     details = domainDetails
                 )
 
                 val generatedTicketId = ticketRepository.saveSale(ticket)
 
+                val savedTicket = ticket.copy(id = generatedTicketId)
+
                 _uiState.value = _uiState.value.copy(
                     isSaleCompleted = true
                 )
+
+                launch(Dispatchers.IO) {
+                    try {
+                        val config = settingsRepository.appConfigFlow.first()
+
+                        printerService.printTicket(savedTicket, config)
+
+                    } catch (e: Exception) {
+                        android.util.Log.e("POS_DEBUG", "Error al imprimir el ticket: ${e.message}")
+                    }
+                }
 
             } catch (e: Exception) {
                 e.printStackTrace()
