@@ -16,9 +16,11 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.devsMarr.pos_galeriaemi.domain.model.UserRole
+import com.devsMarr.pos_galeriaemi.domain.service.PrinterStatus
 import com.devsMarr.pos_galeriaemi.ui.presentation.settings.components.PaperWidthSelector
 import com.devsMarr.pos_galeriaemi.ui.presentation.settings.components.SectionHeader
 import com.devsMarr.pos_galeriaemi.ui.presentation.settings.components.SettingsSwitchRow
+import com.devsMarr.pos_galeriaemi.utils.RequireBluetoothPermissions
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -27,6 +29,19 @@ fun SettingsScreen(
     onNavigateBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    var expanded by remember { mutableStateOf(false) }
+
+    RequireBluetoothPermissions(
+        onPermissionsGranted = {
+            // El ViewModel busca las impresoras
+            viewModel.fetchPairedPrinters()
+        },
+        onPermissionsDenied = {
+            // Aquí podrías mostrar un Snackbar o un Toast indicando que
+            // no se podrán buscar impresoras sin el permiso.
+        }
+    )
 
     LaunchedEffect(uiState.saveSuccess) {
         if (uiState.saveSuccess) {
@@ -106,13 +121,80 @@ fun SettingsScreen(
                 }
                 // --- HARDWARE ---
                 SectionHeader("Hardware")
-                OutlinedTextField(
-                    value = uiState.printerMacAddress,
-                    onValueChange = { viewModel.onPrinterMacChange(it) },
-                    label = { Text("Dirección MAC Impresora Bluetooth (Ej. 00:11:22:33:44:55)") },
+                val selectedPrinterName = uiState.pairedPrinters
+                    .find { it.macAddress == uiState.printerMacAddress }?.name
+                    ?: uiState.printerMacAddress.ifBlank { "Selecciona una impresora" }
+
+                ExposedDropdownMenuBox(
+                    expanded = expanded,
+                    onExpandedChange = { expanded = !expanded }
+                ) {
+                    OutlinedTextField(
+                        value = selectedPrinterName,
+                        onValueChange = {}, // Es de solo lectura
+                        readOnly = true,
+                        label = { Text("Impresora") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                        colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+                        modifier = Modifier
+                            .menuAnchor()
+                            .fillMaxWidth()
+                    )
+                    ExposedDropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
+                    ) {
+                        if (uiState.pairedPrinters.isEmpty()) {
+                            DropdownMenuItem(
+                                text = { Text("No se encontraron dispositivos vinculados") },
+                                onClick = { expanded = false }
+                            )
+                        } else {
+                            uiState.pairedPrinters.forEach { printer ->
+                                DropdownMenuItem(
+                                    text = { Text("${printer.name} (${printer.macAddress})") },
+                                    onClick = {
+                                        viewModel.onPrinterMacChange(printer.macAddress)
+                                        expanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Button(
+                        onClick = { viewModel.testPrinterConnection() },
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
+                        enabled = uiState.printerMacAddress.isNotBlank() && uiState.printerStatus !is PrinterStatus.Connecting
+                    ) {
+                        Text("Prueba de Impresión")
+                    }
+
+                    // Mostramos qué está pasando con el hardware
+                    val statusText = when (val status = uiState.printerStatus) {
+                        is PrinterStatus.Connecting -> "Conectando..."
+                        is PrinterStatus.Connected -> "Imprimiendo..."
+                        is PrinterStatus.Error -> status.message
+                        else -> ""
+                    }
+                    val statusColor = if (uiState.printerStatus is PrinterStatus.Error) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+
+                    Text(
+                        text = statusText,
+                        color = statusColor,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.weight(1f).padding(start = 8.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
                 Text(
                     text = "Ancho del papel térmico",
                     style = MaterialTheme.typography.bodyMedium,

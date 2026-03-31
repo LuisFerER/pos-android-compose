@@ -6,6 +6,8 @@ import com.devsMarr.pos_galeriaemi.data.repository.SettingsRepository
 import com.devsMarr.pos_galeriaemi.domain.model.AppConfig
 import com.devsMarr.pos_galeriaemi.domain.manager.SessionManager
 import com.devsMarr.pos_galeriaemi.domain.model.UserRole
+import com.devsMarr.pos_galeriaemi.domain.service.PrinterService
+import com.devsMarr.pos_galeriaemi.domain.service.PrinterStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,7 +20,8 @@ import javax.inject.Inject
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
-    private val sessionManager: SessionManager
+    private val sessionManager: SessionManager,
+    private val printerService: PrinterService
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -26,6 +29,7 @@ class SettingsViewModel @Inject constructor(
 
     init {
         loadSettings()
+        observePrinterStatus()
     }
 
     private fun loadSettings() {
@@ -80,6 +84,45 @@ class SettingsViewModel @Inject constructor(
             settingsRepository.updateConfig(newConfig)
 
             _uiState.update { it.copy(isSaving = false, saveSuccess = true) }
+        }
+    }
+
+    fun fetchPairedPrinters() {
+        val printers = printerService.getPairedPrinters()
+        _uiState.update { it.copy(pairedPrinters = printers) }
+    }
+    private fun observePrinterStatus() {
+        viewModelScope.launch {
+            // Recolecta el StateFlow del servicio y actualiza UI
+            printerService.status.collect { currentStatus ->
+                _uiState.update { it.copy(printerStatus = currentStatus) }
+            }
+        }
+    }
+
+    // --- FUNCIÓN DE PRUEBA DE IMPRESIÓN ---
+    fun testPrinterConnection() {
+        viewModelScope.launch {
+            val macAddress = _uiState.value.printerMacAddress.trim()
+
+            if (macAddress.isBlank()) {
+                // Si el campo está vacío, forzamos un error local en la UI
+                _uiState.update { it.copy(printerStatus = PrinterStatus.Error("Ingresa una MAC Address primero.")) }
+                return@launch
+            }
+
+            // 1. Intentamos conectar (Esta función es 'suspend', esperará a terminar)
+            printerService.connect(macAddress)
+
+            // 2. Revisamos si la conexión fue exitosa
+            if (printerService.status.value == PrinterStatus.Connected) {
+                // 3. Imprimimos el ticket de prueba
+                printerService.printTestTicket()
+
+                // Opcional: Desconectamos después de la prueba para ahorrar batería,
+                // o lo dejamos conectado. Por ahora lo desconectamos para que sea una prueba limpia.
+                printerService.disconnect()
+            }
         }
     }
 }
