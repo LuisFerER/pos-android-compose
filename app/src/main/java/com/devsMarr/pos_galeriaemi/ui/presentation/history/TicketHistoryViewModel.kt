@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.devsMarr.pos_galeriaemi.data.repository.TicketRepository
 import com.devsMarr.pos_galeriaemi.domain.model.Ticket
+import com.devsMarr.pos_galeriaemi.domain.service.ExcelExportService
+import java.io.File
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,11 +25,15 @@ data class TicketHistoryUiState(
 
 @HiltViewModel
 class TicketHistoryViewModel @Inject constructor(
-    private val ticketRepository: TicketRepository
+    private val ticketRepository: TicketRepository,
+    private val excelExportService: ExcelExportService
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TicketHistoryUiState())
     val uiState: StateFlow<TicketHistoryUiState> = _uiState.asStateFlow()
+
+    private val _exportedFile = MutableStateFlow<File?>(null)
+    val exportedFile: StateFlow<File?> = _exportedFile.asStateFlow()
 
     private var allTicketsCache: List<Ticket> = emptyList()
 
@@ -75,6 +81,23 @@ class TicketHistoryViewModel @Inject constructor(
                 endDateMillis = endMillis
             )
         }
+    }
+
+    fun exportCurrentHistory() {
+        viewModelScope.launch {
+            val currentTickets = _uiState.value.tickets
+
+            if (currentTickets.isNotEmpty()) {
+                // Genera el archivo
+                val file = excelExportService.exportHistoryToExcel(currentTickets)
+                // Le avisa a la UI que ya está listo
+                _exportedFile.value = file
+            }
+        }
+    }
+
+    fun clearExportedFile() {
+        _exportedFile.value = null
     }
 
     // --- Funciones de Utilidad para Tiempos ---

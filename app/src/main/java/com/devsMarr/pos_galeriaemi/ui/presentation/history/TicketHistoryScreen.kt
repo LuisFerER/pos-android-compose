@@ -24,6 +24,18 @@ import com.devsMarr.pos_galeriaemi.domain.model.Ticket
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import android.content.Intent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.FileProvider
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class) // <-- Agregamos ExperimentalFoundationApi
 @Composable
@@ -32,8 +44,11 @@ fun TicketHistoryScreen(
     onBackClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    var showDatePicker by remember { mutableStateOf(false) }
 
+    val exportedFile by viewModel.exportedFile.collectAsState()
+    val context = LocalContext.current
+
+    var showDatePicker by remember { mutableStateOf(false) }
     val dateRangePickerState = rememberDateRangePickerState(
         initialSelectedStartDateMillis = uiState.startDateMillis,
         initialSelectedEndDateMillis = uiState.endDateMillis
@@ -55,6 +70,34 @@ fun TicketHistoryScreen(
         }
     }
 
+    LaunchedEffect(exportedFile) {
+        exportedFile?.let { file ->
+            try {
+                // Usa el FileProvider para crear una URI segura
+                val authority = "${context.packageName}.provider"
+                val uri = FileProvider.getUriForFile(context, authority, file)
+
+                // Crea el Intent para compartir
+                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/csv" // Le dice a Android que es un archivo tipo Excel/CSV
+                    putExtra(Intent.EXTRA_STREAM, uri)
+                    putExtra(Intent.EXTRA_SUBJECT, "Historial de Ventas")
+                    // Le da permiso a las otras apps para leer esta URI temporal
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+
+                // Abre el menú nativo de Android
+                context.startActivity(Intent.createChooser(shareIntent, "Exportar a Excel usando:"))
+
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                // Limpia el estado para no repetir la acción
+                viewModel.clearExportedFile()
+            }
+        }
+    }
+    var isExportMenuExpanded by remember { mutableStateOf(false) }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -83,6 +126,62 @@ fun TicketHistoryScreen(
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             )
+        },
+        floatingActionButton = {
+            // Un Row para alinear los botones horizontalmente (de izquierda a derecha)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.End
+            ) {
+                // --- BOTONES SECUNDARIOS (PDF y EXCEL) ---
+                AnimatedVisibility(
+                    visible = isExportMenuExpanded,
+                    enter = fadeIn() + slideInHorizontally(initialOffsetX = { it }), // Entran desde la derecha
+                    exit = fadeOut() + slideOutHorizontally(targetOffsetX = { it })  // Salen hacia la derecha
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        modifier = Modifier.padding(end = 16.dp) // Espacio entre estos botones y el principal
+                    ) {
+                        // 1. Botón de PDF (Para el Dev 1)
+                        ExtendedFloatingActionButton(
+                            onClick = {
+                                isExportMenuExpanded = false
+                                // TODO: Llamar a la función del PDF cuando el Dev 1 la termine
+                            },
+                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                            contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                            icon = { Icon(Icons.Default.Description, contentDescription = "PDF") },
+                            text = { Text("PDF") }
+                        )
+
+                        // 2. Botón de Excel (Tu función de la Tarea 2.4)
+                        ExtendedFloatingActionButton(
+                            onClick = {
+                                isExportMenuExpanded = false
+                                viewModel.exportCurrentHistory() // Llamamos a tu función
+                            },
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                            icon = { Icon(Icons.Default.List, contentDescription = "Excel") }, // Usa TableChart si tienes los iconos extendidos
+                            text = { Text("Excel") }
+                        )
+                    }
+                }
+
+                // --- BOTÓN PRINCIPAL (El que abre/cierra el menú) ---
+                FloatingActionButton(
+                    onClick = { isExportMenuExpanded = !isExportMenuExpanded },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ) {
+                    // Cambiamos el icono a una 'X' si está abierto
+                    Icon(
+                        imageVector = if (isExportMenuExpanded) Icons.Default.Close else Icons.Default.Share,
+                        contentDescription = if (isExportMenuExpanded) "Cerrar menú" else "Exportar"
+                    )
+                }
+            }
         }
     ) { innerPadding ->
         Box(
