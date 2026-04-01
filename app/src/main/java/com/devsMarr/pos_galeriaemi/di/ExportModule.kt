@@ -1,5 +1,7 @@
 package com.devsMarr.pos_galeriaemi.di
 
+import com.devsMarr.pos_galeriaemi.data.export.PdfExportManager
+import com.devsMarr.pos_galeriaemi.domain.service.PdfExportService
 import com.devsMarr.pos_galeriaemi.data.export.ExcelExportManager
 import com.devsMarr.pos_galeriaemi.domain.service.ExcelExportService
 import dagger.Binds
@@ -17,4 +19,7 @@ abstract class ExportModule {
     abstract fun bindExcelExportService(
         excelExportManager: ExcelExportManager
     ): ExcelExportService
+    abstract fun bindPdfExportService(
+        pdfExportManager: PdfExportManager
+    ): PdfExportService
 }
