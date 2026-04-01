@@ -19,6 +19,9 @@ abstract class ExportModule {
     abstract fun bindExcelExportService(
         excelExportManager: ExcelExportManager
     ): ExcelExportService
+
+    @Binds
+    @Singleton
     abstract fun bindPdfExportService(
         pdfExportManager: PdfExportManager
     ): PdfExportService
